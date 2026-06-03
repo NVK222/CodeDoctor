@@ -72,7 +72,7 @@ def run_tests() -> str:
     Runs tests on the whole project and returns the terminal output.
     """
 
-    test_dir = get_project_root() / "tests"
+    test_dir = get_project_root() / "src" / "tests"
     result = subprocess.run(
         ["pytest", "-v", str(test_dir)], capture_output=True, text=True
     )
