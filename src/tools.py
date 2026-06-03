@@ -1,7 +1,10 @@
+import subprocess
+
 from langchain.tools import tool
 from pathlib import Path
 from utils import get_project_root
 import os
+import pytest
 
 
 @tool
@@ -61,3 +64,20 @@ def edit_file(path: str, search_block: str, replace_block: str) -> str:
         return f"Successfully updated {path}"
     except Exception as e:
         return f"Error while editing: {str(e)}"
+
+
+@tool
+def run_tests() -> str:
+    """
+    Runs tests on the whole project and returns the terminal output.
+    """
+
+    test_dir = get_project_root() / "tests"
+    result = subprocess.run(
+        ["pytest", "-v", str(test_dir)], capture_output=True, text=True
+    )
+    output = f"STDOUT:\n{result.stdout}\nSTDERR:\n:{result.stderr}"
+    if result.returncode == 0:
+        return f"All tests passed successfully\n{output}"
+    else:
+        return f"Tests failed. Here is the output\n{output}"
