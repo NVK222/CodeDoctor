@@ -1,5 +1,52 @@
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
+from langgraph.graph import StateGraph, START, END
+
+from prompts import prompt
+from state import State
+from tools import edit_file, list_files, open_file, run_tests
 
 load_dotenv()
 model = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
+tools = [list_files, open_file, edit_file, run_tests]
+tools_by_name = {tool.name: tool for tool in tools}
+model_with_tools = model.bind_tools(tools)
+
+
+def node(state: State):
+    response = model_with_tools.invoke(
+        ([SystemMessage(content=prompt)] + state.get("messages"))
+    )
+    return {"messages": response, "retry_count": state.get("retry_count", 0) + 1}
+
+
+def tool_node(state: State):
+    result = []
+    for tool_call in state.get("messages")[-1].tool_calls:
+        tool = tools_by_name[tool_call.get("name")]
+        output = tool.invoke(tool_call.get("args"))
+        result.append(ToolMessage(content=output, tool_call_id=tool_call.get("id")))
+    return {"messages": result}
+
+
+def should_continue(state: State):
+    if state.get("retry_count") > 50:
+        return END
+    if state.get("messages")[-1].tool_calls:
+        return "tool"
+    return END
+
+
+builder = StateGraph(State)
+builder.add_node("model", node)
+builder.add_node("tool", tool_node)
+builder.add_edge(START, "model")
+builder.add_conditional_edges("model", should_continue)
+builder.add_edge("tool", "model")
+
+graph = builder.compile()
+messages = [HumanMessage(content="Fix the division by zero error.")]
+messages = graph.invoke({"messages": messages})
+for m in messages.get("messages"):
+    m.pretty_print()
