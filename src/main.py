@@ -2,7 +2,6 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, START, END
-
 from prompts import prompt
 from state import State
 from tools import edit_file, list_files, open_file
@@ -27,8 +26,21 @@ def tool_node(state: State):
     for tool_call in state.get("messages")[-1].tool_calls:
         tool = tools_by_name[tool_call.get("name")]
         output = tool.invoke(tool_call.get("args"))
-        result.append(ToolMessage(content=output, tool_call_id=tool_call.get("id")))
+        result.append(
+            ToolMessage(
+                name=tool_call.get("name"),
+                content=output,
+                tool_call_id=tool_call.get("id"),
+            )
+        )
     return {"messages": result}
+
+
+def should_test(state: State):
+    last_msg: ToolMessage = state.get("messages")[-1]
+    if last_msg.name in ("list_files", "open_file"):
+        return "model"
+    return "tester"
 
 
 def test_node(state: State):
@@ -53,11 +65,12 @@ builder.add_node("model", node)
 builder.add_node("tool", tool_node)
 builder.add_node("tester", test_node)
 builder.add_edge(START, "model")
-builder.add_conditional_edges("model", should_continue)
-builder.add_edge("tool", "tester")
+builder.add_conditional_edges("model", should_continue, ["tool", END])
+builder.add_conditional_edges("tool", should_test, ["model", "tester"])
 builder.add_edge("tester", "model")
 
 graph = builder.compile()
+
 messages = [HumanMessage(content="Fix the division by zero error.")]
 messages = graph.invoke({"messages": messages})
 for m in messages.get("messages"):
