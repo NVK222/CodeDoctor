@@ -5,11 +5,12 @@ from langgraph.graph import StateGraph, START, END
 
 from prompts import prompt
 from state import State
-from tools import edit_file, list_files, open_file, run_tests
+from tools import edit_file, list_files, open_file
+from utils import run_tests
 
 load_dotenv()
 model = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
-tools = [list_files, open_file, edit_file, run_tests]
+tools = [list_files, open_file, edit_file]
 tools_by_name = {tool.name: tool for tool in tools}
 model_with_tools = model.bind_tools(tools)
 
@@ -30,6 +31,15 @@ def tool_node(state: State):
     return {"messages": result}
 
 
+def test_node(state: State):
+    test_result = run_tests()
+    if "All tests passed successfully" in test_result:
+        ctx = "All tests passed successfully! Do not call any more tools. You are completely done. Provide your final text summary now."
+    else:
+        ctx = test_result
+    return {"messages": [HumanMessage(content=ctx)]}
+
+
 def should_continue(state: State):
     if state.get("retry_count") > 50:
         return END
@@ -41,9 +51,11 @@ def should_continue(state: State):
 builder = StateGraph(State)
 builder.add_node("model", node)
 builder.add_node("tool", tool_node)
+builder.add_node("tester", test_node)
 builder.add_edge(START, "model")
 builder.add_conditional_edges("model", should_continue)
-builder.add_edge("tool", "model")
+builder.add_edge("tool", "tester")
+builder.add_edge("tester", "model")
 
 graph = builder.compile()
 messages = [HumanMessage(content="Fix the division by zero error.")]
