@@ -2,6 +2,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import ToolNode
 from prompts import prompt
 from state import State
 from tools import edit_file, list_files, open_file
@@ -10,7 +11,6 @@ from utils import run_tests
 load_dotenv()
 model = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
 tools = [list_files, open_file, edit_file]
-tools_by_name = {tool.name: tool for tool in tools}
 model_with_tools = model.bind_tools(tools)
 
 
@@ -21,19 +21,7 @@ def node(state: State):
     return {"messages": response, "retry_count": state.get("retry_count", 0) + 1}
 
 
-def tool_node(state: State):
-    result = []
-    for tool_call in state.get("messages")[-1].tool_calls:
-        tool = tools_by_name[tool_call.get("name")]
-        output = tool.invoke(tool_call.get("args"))
-        result.append(
-            ToolMessage(
-                name=tool_call.get("name"),
-                content=output,
-                tool_call_id=tool_call.get("id"),
-            )
-        )
-    return {"messages": result}
+tool_node = ToolNode(tools)
 
 
 def should_test(state: State):
