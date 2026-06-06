@@ -2,13 +2,24 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
+from cli import parse_args
 from config import Config
 from prompts import prompt
 from state import State
 from tools import edit_file, list_files, open_file
 from utils import run_tests
 
-cfg = Config()
+args = parse_args()
+
+cfg = Config(
+    args.model,
+    args.max_retries,
+    args.ignore,
+    not args.include_dot,
+    args.root_dir,
+    args.search_dir,
+    args.test_dir,
+)
 model = ChatGoogleGenerativeAI(model=cfg.model_name)
 
 tools = [list_files, open_file, edit_file]
@@ -62,7 +73,7 @@ builder.add_edge("tester", "model")
 
 graph = builder.compile()
 
-messages = [HumanMessage(content="Fix the division by zero error.")]
+messages = [HumanMessage(content=args.prompt)]
 messages = graph.invoke({"messages": messages, "cfg": cfg, "retry_count": 0})
 for m in messages.get("messages"):
     m.pretty_print()
