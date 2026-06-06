@@ -1,24 +1,13 @@
 from pathlib import Path
 import subprocess
+from config import Config
 
 
-def get_project_root() -> Path:
-    """
-    Returns the project root.
-    """
-    current = Path(__file__).resolve()
-    for parent in current.parents:
-        if (parent / ".git").exists() or (parent / "pyproject.toml").exists():
-            return parent
-    return current.parent
-
-
-def run_tests() -> str:
+def run_tests(test_dir: Path) -> str:
     """
     Runs tests on the whole project and returns the terminal output.
     """
 
-    test_dir = get_project_root() / "tests"
     result = subprocess.run(
         ["pytest", "-v", str(test_dir)], capture_output=True, text=True
     )
@@ -29,17 +18,23 @@ def run_tests() -> str:
         return f"Tests failed. Here is the output\n{output}"
 
 
-def read_file(path: str) -> str:
+def read_file(path: str, cfg: Config) -> str:
+    file_path = cfg.root_dir / path
     try:
-        with open(get_project_root() / path, "r") as f:
-            return f.read()
+        with open(file_path, "r") as fp:
+            return fp.read()
+    except FileNotFoundError:
+        raise
     except Exception:
         raise
 
 
-def write_file(path: str, contents: str) -> None:
+def write_to_file(path: str, content: str, cfg: Config) -> None:
+    file_path = cfg.root_dir / path
     try:
-        with open(get_project_root() / path, "w") as f:
-            f.write(contents)
+        with open(file_path, "w") as fp:
+            fp.write(content)
+    except FileNotFoundError:
+        raise
     except Exception:
         raise

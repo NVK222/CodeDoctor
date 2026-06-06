@@ -1,15 +1,16 @@
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-from dotenv import load_dotenv
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
+from config import Config
 from prompts import prompt
 from state import State
 from tools import edit_file, list_files, open_file
 from utils import run_tests
 
-load_dotenv()
-model = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
+cfg = Config()
+model = ChatGoogleGenerativeAI(model=cfg.model_name)
+
 tools = [list_files, open_file, edit_file]
 model_with_tools = model.bind_tools(tools)
 
@@ -18,7 +19,7 @@ def node(state: State):
     response = model_with_tools.invoke(
         ([SystemMessage(content=prompt)] + state.get("messages"))
     )
-    return {"messages": response, "retry_count": state.get("retry_count", 0) + 1}
+    return {"messages": response}
 
 
 tool_node = ToolNode(tools)
@@ -32,16 +33,18 @@ def should_test(state: State):
 
 
 def test_node(state: State):
-    test_result = run_tests()
+    test_result = run_tests(cfg.test_dir)
     if "All tests passed successfully" in test_result:
         ctx = "All tests passed successfully! Do not call any more tools. You are completely done. Provide your final text summary now."
-    else:
-        ctx = test_result
-    return {"messages": [HumanMessage(content=ctx)]}
+        return {"messages": [HumanMessage(content=ctx)]}
+    return {
+        "messages": [HumanMessage(content=test_result)],
+        "retry_count": state.get("retry_count", 0) + 1,
+    }
 
 
 def should_continue(state: State):
-    if state.get("retry_count") > 50:
+    if state.get("retry_count") > state.get("cfg").max_retries:
         return END
     if state.get("messages")[-1].tool_calls:
         return "tool"
@@ -60,6 +63,6 @@ builder.add_edge("tester", "model")
 graph = builder.compile()
 
 messages = [HumanMessage(content="Fix the division by zero error.")]
-messages = graph.invoke({"messages": messages})
+messages = graph.invoke({"messages": messages, "cfg": cfg, "retry_count": 0})
 for m in messages.get("messages"):
     m.pretty_print()
