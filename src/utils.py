@@ -27,3 +27,19 @@ def run_tests() -> str:
         return f"All tests passed successfully\n{output}"
     else:
         return f"Tests failed. Here is the output\n{output}"
+
+
+def read_file(path: str) -> str:
+    try:
+        with open(get_project_root() / path, "r") as f:
+            return f.read()
+    except Exception:
+        raise
+
+
+def write_file(path: str, contents: str) -> None:
+    try:
+        with open(get_project_root() / path, "w") as f:
+            f.write(contents)
+    except Exception:
+        raise
