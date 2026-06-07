@@ -1,5 +1,5 @@
 from langgraph.graph.message import MessagesState
-from config import Config
+from codedoctor.config import Config
 
 
 class State(MessagesState):

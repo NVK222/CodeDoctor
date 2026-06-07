@@ -1,4 +1,4 @@
-from dummy import divide
+from codedoctor.dummy import divide
 
 
 def test_divide():

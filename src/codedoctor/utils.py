@@ -1,6 +1,6 @@
 from pathlib import Path
 import subprocess
-from config import Config
+from codedoctor.config import Config
 
 
 def run_tests(test_dir: Path) -> str:

@@ -2,12 +2,12 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
-from cli import parse_args
-from config import Config
+from codedoctor.cli import parse_args
+from codedoctor.config import Config
 from prompts import prompt
-from state import State
+from codedoctor.state import State
 from tools import edit_file, list_files, open_file
-from utils import run_tests
+from codedoctor.utils import run_tests
 import re
 
 args = parse_args()

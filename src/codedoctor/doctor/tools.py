@@ -1,6 +1,6 @@
 from langchain.tools import ToolRuntime, tool
-from config import Config
-from utils import read_file, write_to_file
+from codedoctor.config import Config
+from codedoctor.utils import read_file, write_to_file
 
 
 @tool
