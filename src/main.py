@@ -8,6 +8,7 @@ from prompts import prompt
 from state import State
 from tools import edit_file, list_files, open_file
 from utils import run_tests
+import re
 
 args = parse_args()
 
@@ -74,6 +75,47 @@ builder.add_edge("tester", "model")
 graph = builder.compile()
 
 messages = [HumanMessage(content=args.prompt)]
-messages = graph.invoke({"messages": messages, "cfg": cfg, "retry_count": 0})
-for m in messages.get("messages"):
-    m.pretty_print()
+graph_input = {"messages": messages, "cfg": cfg, "retry_count": 0}
+
+print(f"Running CodeDoctor on the directory:  {cfg.search_dir}\n")
+
+for chunk in graph.stream(graph_input, stream_mode="updates", version="v2"):
+    if chunk["type"] == "updates":
+        for node_name, state in chunk["data"].items():
+            if node_name == "model":
+                m = state.get("messages").content
+                tool_call = state.get("messages").tool_calls
+
+                if m:
+                    print(f"\n[DOCTOR] :  {m[0].get('text')}")
+
+                if tool_call:
+                    tool = tool_call[0]
+                    tool_name = tool.get("name")
+                    tool_args = tool.get("args")
+
+                    if tool_name == "list_files":
+                        print("Doctor is understanding the directory...")
+
+                    if tool_name == "open_file":
+                        print(f"Doctor is reading {tool_args.get('path')}")
+
+                    if tool_name == "edit_file":
+                        print(f"Doctor is editing {tool_args.get('path')}")
+
+            if node_name == "tool":
+                if "Error:" in state.get("messages")[0].content:
+                    print("Error: Tool failed.")
+                else:
+                    print("Tool executed successfully.")
+
+            if node_name == "tester":
+                m: str = state.get("messages")[0].content
+                if "passed" in m:
+                    print("ALL TESTS PASSED SUCCESSFULLY")
+                else:
+                    print("\nFollowing Tests Failed\n")
+                    failed = re.findall(r"^FAILED\s+(.+)$", m, re.MULTILINE)
+                    for line in failed:
+                        print(line)
+                    print("\n\n")
