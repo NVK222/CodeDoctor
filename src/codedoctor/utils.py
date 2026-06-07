@@ -52,8 +52,9 @@ def list_files(
             continue
 
         # Folders / files in ignore are excluded
-        if not file.is_file() or any(
-            ignore_file in str(file) for ignore_file in ignore
+        if not file.is_file() or (
+            ignore is not None
+            and any(ignore_file in str(file) for ignore_file in ignore)
         ):
             continue
 
