@@ -8,10 +8,10 @@ Expect a couple of bugs.
 ### 1. uv
 ### 2. A Gemini api key
 # Usage
-1. Clone this repository
-2. Run ```uv sync```
-3. Create a .env file with ```GOOGLE_API_KEY=<YOUR API KEY>```
-4. Run ```uv run src/main.py``` with the arguments
+1. Clone this repository.
+2. Run ```uv sync```.
+3. Create a .env file with ```GOOGLE_API_KEY=<YOUR API KEY>```.
+4. Run ```uv run main``` with arguments.
 # Options
 ```
 usage: CodeDoctor [-h] [-s SEARCH_DIR] [-t TEST_DIR] [-m MODEL] [-r MAX_RETRIES] [-ig IGNORE] [-id] root_dir prompt
