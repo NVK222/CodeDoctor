@@ -5,7 +5,7 @@ from langgraph.prebuilt import ToolNode
 from codedoctor.cli import parse_args
 from codedoctor.config import Config
 from prompts import prompt
-from codedoctor.state import State
+from codedoctor.state import DoctorState
 from tools import edit_file, list_files, open_file
 from codedoctor.utils import run_tests
 import re
@@ -29,7 +29,7 @@ tools = [list_files, open_file, edit_file]
 model_with_tools = model.bind_tools(tools)
 
 
-def node(state: State):
+def node(state: DoctorState):
     response = model_with_tools.invoke(
         ([SystemMessage(content=prompt)] + state.get("messages"))
     )
@@ -39,14 +39,14 @@ def node(state: State):
 tool_node = ToolNode(tools)
 
 
-def should_test(state: State):
+def should_test(state: DoctorState):
     last_msg: ToolMessage = state.get("messages")[-1]
     if last_msg.name in ("list_files", "open_file"):
         return "model"
     return "tester"
 
 
-def test_node(state: State):
+def test_node(state: DoctorState):
     test_result = run_tests(cfg.test_dir)
     if "All tests passed successfully" in test_result:
         ctx = "All tests passed successfully! Do not call any more tools. You are completely done. Provide your final text summary now."
@@ -57,7 +57,7 @@ def test_node(state: State):
     }
 
 
-def should_continue(state: State):
+def should_continue(state: DoctorState):
     if state.get("retry_count") > state.get("cfg").max_retries:
         return END
     if state.get("messages")[-1].tool_calls:
@@ -65,7 +65,7 @@ def should_continue(state: State):
     return END
 
 
-builder = StateGraph(State)
+builder = StateGraph(DoctorState)
 builder.add_node("model", node)
 builder.add_node("tool", tool_node)
 builder.add_node("tester", test_node)
