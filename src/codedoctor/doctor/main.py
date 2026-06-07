@@ -13,14 +13,16 @@ import re
 args = parse_args()
 
 cfg = Config(
+    args.root_dir,
+    args.search_dir,
+    args.test_dir,
     args.model,
     args.max_retries,
     args.ignore,
     not args.include_dot,
-    args.root_dir,
-    args.search_dir,
-    args.test_dir,
 )
+
+
 model = ChatGoogleGenerativeAI(model=cfg.model_name)
 
 tools = [list_files, open_file, edit_file]
