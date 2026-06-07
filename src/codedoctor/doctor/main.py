@@ -6,7 +6,7 @@ from codedoctor.cli import parse_args
 from codedoctor.config import Config
 from codedoctor.doctor.prompts import prompt
 from codedoctor.state import DoctorState
-from codedoctor.doctor.tools import edit_file, list_files, open_file
+from codedoctor.doctor.tools import edit_file, list_all_files, open_file
 from codedoctor.utils import run_tests
 import re
 
@@ -26,7 +26,7 @@ def main():
 
     model = ChatGoogleGenerativeAI(model=cfg.model_name)
 
-    tools = [list_files, open_file, edit_file]
+    tools = [list_all_files, open_file, edit_file]
     model_with_tools = model.bind_tools(tools)
 
     def node(state: DoctorState):

@@ -38,3 +38,26 @@ def write_to_file(path: str, content: str, cfg: Config) -> None:
         raise
     except Exception:
         raise
+
+
+def list_files(
+    dir: Path, ignore: set[str] | None, exclude_dot: bool = True
+) -> list[str]:
+    files = []
+
+    # TODO : For large directories this may be slow. May need to replace with os cmds
+    for file in dir.rglob("*"):
+        # Folders / files starting with . are excluded automatically
+        if exclude_dot and str(file.relative_to(dir)).startswith("."):
+            continue
+
+        # Folders / files in ignore are excluded
+        if not file.is_file() or any(
+            ignore_file in str(file) for ignore_file in ignore
+        ):
+            continue
+
+        # Retun path relative to specified directory
+        files.append(str(file.relative_to(dir)))
+
+    return files

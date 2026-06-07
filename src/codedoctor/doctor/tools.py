@@ -1,34 +1,16 @@
 from langchain.tools import ToolRuntime, tool
 from codedoctor.config import Config
-from codedoctor.utils import read_file, write_to_file
+from codedoctor.utils import list_files, read_file, write_to_file
 
 
-@tool
-def list_files(runtime: ToolRuntime) -> list[str]:
+def list_all_files(runtime: ToolRuntime) -> list[str]:
     """
     List all files in the project root.
     Returns:
         All the files in the project root.
     """
-    files = []
     cfg: Config = runtime.state.get("cfg")
-
-    # TODO : For large directories this may be slow. May need to replace with os cmds
-    for file in cfg.search_dir.rglob("*"):
-        # Folders / files starting with . are excluded automatically
-        if str(file.relative_to(cfg.search_dir)).startswith("."):
-            continue
-
-        # Folders / files in ignore are excluded
-        if not file.is_file() or any(
-            ignore_file in str(file) for ignore_file in cfg.ignore_list
-        ):
-            continue
-
-        # Retun path relative to root
-        files.append(str(file.relative_to(cfg.root_dir)))
-
-    return files
+    return list_files(cfg.search_dir, cfg.ignore_list, cfg.exclude_dot)
 
 
 @tool
