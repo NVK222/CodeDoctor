@@ -101,10 +101,11 @@ def main():
                             print(f"Doctor is editing {tool_args.get('path')}")
 
                 if node_name == "tool":
-                    if "Error:" in state.get("messages")[0].content:
-                        print("Error: Tool failed.")
+                    m = state.get("messages")[0]
+                    if "Error:" in m.content:
+                        print(f"Error: Tool {m.name} failed.")
                     else:
-                        print("Tool executed successfully.")
+                        print(f"Tool {m.name} executed successfully.")
 
                 if node_name == "tester":
                     m: str = state.get("messages")[0].content
