@@ -1,3 +1,5 @@
+import sys
+
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, START, END
@@ -71,7 +73,17 @@ def main():
 
     graph = builder.compile()
 
-    messages = [HumanMessage(content=args.prompt)]
+    pre_test = run_tests(cfg.test_dir)
+    if "passed" in pre_test:
+        print("All tests are passing. Exiting")
+        sys.exit(0)
+
+    failed = re.findall(r"^FAILED\s+(.+)$", pre_test, re.MULTILINE)
+    summary = "\n".join(failed)
+
+    p = f"User's request: {args.prompt}\nCurrent test failures:\n{summary}\nFull test result:\n{pre_test}"
+
+    messages = [HumanMessage(content=p)]
     graph_input = {"messages": messages, "cfg": cfg, "retry_count": 0}
 
     print(f"Running CodeDoctor on the directory:  {cfg.search_dir}\n")
