@@ -3,6 +3,7 @@ from codedoctor.config import Config
 from codedoctor.utils import list_files, read_file, write_to_file
 
 
+@tool
 def list_all_files(runtime: ToolRuntime) -> list[str]:
     """
     List all files in the project src.
@@ -10,7 +11,7 @@ def list_all_files(runtime: ToolRuntime) -> list[str]:
         All the files in the project src.
     """
     cfg: Config = runtime.state.get("cfg")
-    return list_files(cfg.search_dir, cfg.ignore_list, cfg.exclude_dot)
+    return list_files(cfg.search_dir, cfg)
 
 
 @tool
@@ -24,9 +25,8 @@ def open_file(path: str, runtime: ToolRuntime) -> str:
     """
 
     cfg: Config = runtime.state.get("cfg")
-    file_path = cfg.search_dir / path
     try:
-        contents = read_file(file_path, cfg)
+        contents = read_file(path, cfg)
         return contents
 
     except FileNotFoundError:
@@ -39,7 +39,6 @@ def edit_file(
 ) -> str:
     """
     Safely replaces a specific block of code inside a file.
-            max_retries: Maximum number of times the tests must fail to quit. Default: 10
     Args:
         path: The relative path to the target file from project src. It must be one of the paths returned by list_all_files
         search_block: The exact, existing code block to find (include indentation).
@@ -48,9 +47,8 @@ def edit_file(
         A success message or a detailed error message if the block wasn't found.
     """
     cfg: Config = runtime.state.get("cfg")
-    file_path = cfg.search_dir / path
     try:
-        contents = read_file(file_path, cfg)
+        contents = read_file(path, cfg)
 
         occurences = contents.count(search_block)
         if occurences == 0:
@@ -58,7 +56,7 @@ def edit_file(
 
         new_contents = contents.replace(search_block, replace_block)
 
-        write_to_file(file_path, new_contents, cfg)
+        write_to_file(path, new_contents, cfg)
         return f"Successfully updated {path}"
 
     except FileNotFoundError:
