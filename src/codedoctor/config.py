@@ -18,9 +18,9 @@ class Config:
         """
         Initializes the config.
         Args:
-            root_dir: The project root. Default: A folder with .git or pyproject.toml in it.
-            search_dir: A path relative to project_root, where the files will be opened and searched. Default: project_root
-            test_dir: A path relative to project root, where tests are stored.
+            root_dir: The project root.
+            search_dir: A path relative to project_root, where the actual source code lives. Default: project_root / src
+            test_dir: A path relative to project root, where tests are stored. Default: project_root / tests
             model_name: The model to use. (CURRENTLY ONLY GEMINI API MODELS). Default: 'gemini-3.1-flash-lite'
             max_retries: Maximum number of times the tests must fail to quit. Default: 10
             ignore_list: A set of file/folder names that will be excluded from being opened and searched. Default: {'__pycache', '.lock'}
@@ -52,13 +52,5 @@ class Config:
     @root_dir.setter
     def root_dir(self, value: str | Path) -> None:
         self._root_dir = Path(value).resolve()
-        self.search_dir = self._root_dir
+        self.search_dir = (self._root_dir / "src").resolve()
         self.test_dir = (self._root_dir / "tests").resolve()
-
-    @staticmethod
-    def _get_config_root() -> Path:
-        current = Path(__file__).resolve()
-        for parent in current.parents:
-            if (parent / ".git").exists() or (parent / "pyproject.toml").exists():
-                return parent
-        return current.parent
