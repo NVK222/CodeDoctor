@@ -39,13 +39,13 @@ def main():
 
     def should_test(state: DoctorState):
         last_msg: ToolMessage = state.get("messages")[-1]
-        if last_msg.name in ("list_files", "open_file"):
+        if last_msg.name in ("list_all_files", "open_file"):
             return "model"
         return "tester"
 
     def test_node(state: DoctorState):
         test_result = run_tests(cfg.test_dir)
-        if "All tests passed successfully" in test_result:
+        if "EXIT_CODE:0" in test_result:
             ctx = "All tests passed successfully! Do not call any more tools. You are completely done. Provide your final text summary now."
             return {"messages": [HumanMessage(content=ctx)]}
         return {
@@ -91,7 +91,7 @@ def main():
                         tool_name = tool.get("name")
                         tool_args = tool.get("args")
 
-                        if tool_name == "list_files":
+                        if tool_name == "list_all_files":
                             print("Doctor is understanding the directory...")
 
                         if tool_name == "open_file":
@@ -103,6 +103,7 @@ def main():
                 if node_name == "tool":
                     m = state.get("messages")[0]
                     if "Error:" in m.content:
+                        print(m)
                         print(f"Error: Tool {m.name} failed.")
                     else:
                         print(f"Tool {m.name} executed successfully.")
@@ -110,13 +111,13 @@ def main():
                 if node_name == "tester":
                     m: str = state.get("messages")[0].content
                     if "passed" in m:
-                        print("ALL TESTS PASSED SUCCESSFULLY")
+                        print("All tests passed successfully")
                     else:
-                        print("\nFollowing Tests Failed\n")
+                        print("Following Tests Failed")
                         failed = re.findall(r"^FAILED\s+(.+)$", m, re.MULTILINE)
                         for line in failed:
                             print(line)
-                        print("\n\n")
+                        print()
 
 
 if __name__ == "__main__":
