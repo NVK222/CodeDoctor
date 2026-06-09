@@ -20,7 +20,8 @@ def run_tests(test_dir: Path) -> str:
 
 
 def read_file(path: str, cfg: Config) -> str:
-    file_path = cfg.root_dir / path
+    p = Path(path)
+    file_path = p if p.is_absolute() else cfg.root_dir / p
     try:
         with open(file_path, "r") as fp:
             return fp.read()
@@ -31,7 +32,8 @@ def read_file(path: str, cfg: Config) -> str:
 
 
 def write_to_file(path: str, content: str, cfg: Config) -> None:
-    file_path = cfg.root_dir / path
+    p = Path(path)
+    file_path = p if p.is_absolute() else cfg.root_dir / p
     try:
         with open(file_path, "w") as fp:
             fp.write(content)
@@ -57,7 +59,9 @@ def list_files(dir: Path, cfg: Config) -> list[str]:
         ):
             continue
 
-        # Retun path relative to specified directory
-        files.append(str(file.relative_to(cfg.root_dir)))
+        if file.is_relative_to(cfg.root_dir):
+            files.append(str(file.relative_to(cfg.root_dir)))
+        else:
+            files.append(str(file.resolve()))
 
     return files

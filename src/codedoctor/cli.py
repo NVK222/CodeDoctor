@@ -5,22 +5,26 @@ from pathlib import Path
 def parse_args():
     parser = argparse.ArgumentParser("CodeDoctor")
 
-    parser.add_argument("root_dir", help="The root directory of the project", type=Path)
+    parser.add_argument(
+        "root_dir",
+        help="The root directory of the project",
+        type=lambda p: Path(p).resolve(),
+    )
     parser.add_argument("prompt", help="Prompt for the doctor")
     parser.add_argument(
         "-s",
         "--search-dir",
-        help="The directory relative to the root directory where the source code lives. (DEFAULT: root_dir / src)",
-        type=Path,
-        default=None,
+        help="The directory relative to the root directory where the source code lives. If the path is absolute, the absolute path is set. (DEFAULT: root_dir / src)",
+        type=str,
+        default="src",
         metavar="dir",
     )
     parser.add_argument(
         "-t",
         "--test-dir",
-        help="The directory relative to the root directory where tests are stored. (DEFAULT: root_dir / tests)",
-        type=Path,
-        default=None,
+        help="The directory relative to the root directory where tests are stored. If the path is absolute, the absolute path is set. (DEFAULT: root_dir / tests)",
+        type=str,
+        default="tests",
         metavar="dir",
     )
 
@@ -58,13 +62,5 @@ def parse_args():
     )
 
     args = parser.parse_args()
-
-    args.root_dir = Path(args.root_dir).absolute()
-
-    if args.search_dir is None:
-        args.search_dir = args.root_dir / "src"
-
-    if args.test_dir is None:
-        args.test_dir = args.root_dir / "tests"
 
     return args

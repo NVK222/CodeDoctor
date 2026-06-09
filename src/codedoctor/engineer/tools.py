@@ -18,12 +18,18 @@ def create_test(src_path: str, code: str, runtime: ToolRuntime) -> str:
     """
     cfg: Config = runtime.state.get("cfg")
     try:
-        test_dir = cfg.test_dir.relative_to(cfg.root_dir)
-        name = src_path.replace("/", "_")
+        name = src_path.lstrip("/").replace("/", "_").replace("\\", "_")
         name = f"test_{name}"
-        path = test_dir / name
-        write_to_file(path, code, cfg)
-        return f"Successfully created test file at '{path}' to test '{src_path}'."
+        path = cfg.test_dir / name
+        write_to_file(str(path), code, cfg)
+        display_path = (
+            path.relative_to(cfg.root_dir)
+            if path.is_relative_to(cfg.root_dir)
+            else path
+        )
+        return (
+            f"Successfully created test file at '{display_path}' to test '{src_path}'."
+        )
     except Exception as e:
         return f"Error: {str(e)}"
 

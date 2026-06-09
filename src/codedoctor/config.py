@@ -41,9 +41,17 @@ class Config:
         if exclude_dot is not None:
             self.exclude_dot = exclude_dot
         if search_dir:
-            self.search_dir = (self.root_dir / Path(search_dir)).resolve()
+            p = Path(search_dir)
+            if p.is_absolute():
+                self.search_dir = p.resolve()
+            else:
+                self.search_dir = (self.root_dir / p).resolve()
         if test_dir:
-            self.test_dir = (self.root_dir / Path(test_dir)).resolve()
+            p = Path(test_dir)
+            if p.is_absolute():
+                self.test_dir = p.resolve()
+            else:
+                self.test_dir = (self.root_dir / p).resolve()
 
     @property
     def root_dir(self) -> Path:

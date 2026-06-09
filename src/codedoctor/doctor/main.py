@@ -15,6 +15,7 @@ import re
 
 def main():
     args = parse_args()
+    print(args.root_dir, args.search_dir, args.test_dir, sep="\n", end="\n")
 
     cfg = Config(
         args.root_dir,
@@ -25,6 +26,9 @@ def main():
         args.ignore,
         not args.include_dot,
     )
+
+    print(cfg.root_dir, cfg.search_dir, cfg.test_dir, sep="\n", end="\n")
+    sys.exit()
 
     model = ChatGoogleGenerativeAI(model=cfg.model_name)
 
@@ -72,9 +76,8 @@ def main():
     builder.add_edge("tester", "model")
 
     graph = builder.compile()
-
     pre_test = run_tests(cfg.test_dir)
-    if "passed" in pre_test:
+    if "EXIT_CODE:0" in pre_test:
         print("All tests are passing. Exiting")
         sys.exit(0)
 

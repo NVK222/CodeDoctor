@@ -73,7 +73,11 @@ graph = builder.compile()
 
 print(f"Running Engineer on {cfg.root_dir}")
 
-messages = [HumanMessage(content="Add tests for the file utils.py")]
+messages = [
+    HumanMessage(
+        content="Create test for cli.py, making sure that that paths passed to it are correct after the config is created."
+    )
+]
 for chunk in graph.stream(
     {"messages": messages, "cfg": cfg, "retry_count": 0},
     stream_mode="updates",
@@ -110,6 +114,7 @@ for chunk in graph.stream(
                 m = state.get("messages")[0]
                 # Need more robust error checking
                 if "Error:" in m.content:
+                    print(m)
                     print(f"Error: Tool {m.name} failed.")
                 else:
                     print(f"Tool {m.name} executed successfully.")
