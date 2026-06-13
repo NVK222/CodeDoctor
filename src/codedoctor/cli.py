@@ -29,10 +29,18 @@ def parse_args():
     )
 
     parser.add_argument(
-        "-m",
-        "--model",
-        help="The model to be used. (CURRENTLY GEMINI API MODELS ONLY). (DEFAULT: gemini-3.1-flash-lite)",
+        "-sm",
+        "--strong-model",
+        help="The model to use for tasks like fixing the code and creating tests. (CURRENTLY GEMINI API MODELS ONLY). (DEFAULT: gemini-3.1-flash-lite)",
         default="gemini-3.1-flash-lite",
+        metavar="model",
+    )
+
+    parser.add_argument(
+        "-wm",
+        "--weak-model",
+        help="The model to use for detecting failures in tests. (CURRENTLY GEMINI API MODELS ONLY). (DEFAULT: gemma-4-31b-it)",
+        default="gemma-4-31b-it",
         metavar="model",
     )
 

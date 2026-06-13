@@ -4,7 +4,7 @@ from langgraph.graph import START, StateGraph, END
 from langgraph.prebuilt import ToolNode
 from codedoctor.cli import parse_args
 from codedoctor.config import Config
-from codedoctor.engineer.prompts import prompt
+from codedoctor.engineer.prompts import prompt_auditor, prompt_engineer
 from codedoctor.engineer.tools import (
     create_test,
     edit_test,
@@ -24,20 +24,22 @@ def main():
         args.root_dir,
         args.search_dir,
         args.test_dir,
-        args.model,
+        args.strong_model,
+        args.weak_model,
         args.max_retries,
         args.ignore,
         not args.include_dot,
     )
 
-    model_engineer = ChatGoogleGenerativeAI(model=cfg.model_name)
+    model_engineer = ChatGoogleGenerativeAI(model=cfg.strong_model_name)
+    model_auditor = ChatGoogleGenerativeAI(model=cfg.weak_model_name)
 
     tools_engineer = [create_test, list_tests, list_src, edit_test, open_src]
     model_engineer_with_tools = model_engineer.bind_tools(tools_engineer)
 
     def node_engineer(state: EngineerState):
         response = model_engineer_with_tools.invoke(
-            ([SystemMessage(content=prompt)]) + state.get("messages")
+            ([SystemMessage(content=prompt_engineer)]) + state.get("messages")
         )
         return {"messages": response}
 
@@ -57,12 +59,19 @@ def main():
         return "node_test"
 
     def check_should_continue(state: EngineerState):
-        last_msg: HumanMessage = state.get("messages")[-1].content
-        if "EXIT_CODE:1" not in last_msg:
+        last_msg: HumanMessage = state.get("messages")[-1].text
+        if "EXIT_CODE:0" in last_msg:
             return END
         if state.get("retry_count") >= state.get("cfg").max_retries:
             return END
-        return "node_engineer"
+        response = model_auditor.invoke(
+            ([SystemMessage(content=prompt_auditor)] + [last_msg])
+        )
+
+        if response.text.upper() == "ENGINEER":
+            return "node_engineer"
+        else:
+            return END
 
     builder = StateGraph(EngineerState)
     builder.add_node("node_engineer", node_engineer)

@@ -19,7 +19,8 @@ def main():
         args.root_dir,
         args.search_dir,
         args.test_dir,
-        args.model,
+        args.strong_model,
+        args.weak_model,
         args.max_retries,
         args.ignore,
         not args.include_dot,
@@ -30,7 +31,7 @@ def main():
         print("All tests are passing. Exiting")
         sys.exit(0)
 
-    model_doctor = ChatGoogleGenerativeAI(model=cfg.model_name)
+    model_doctor = ChatGoogleGenerativeAI(model=cfg.strong_model_name)
 
     tools_doctor = [list_all_files, open_file, edit_file]
     model_doctor_with_tools = model_doctor.bind_tools(tools_doctor)

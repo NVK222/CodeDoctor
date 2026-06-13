@@ -6,7 +6,7 @@ from codedoctor.config import Config
 
 def run_tests(test_dir: Path) -> str:
     result = subprocess.run(
-        ["pytest", "-v", str(test_dir)], capture_output=True, text=True
+        ["pytest", "-v", "--no-header", str(test_dir)], capture_output=True, text=True
     )
     output = f"STDOUT:\n{result.stdout}\nSTDERR:\n:{result.stderr}\nEXIT_CODE:{result.returncode}"
     if result.returncode == 0:

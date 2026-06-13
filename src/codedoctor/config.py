@@ -10,7 +10,8 @@ class Config:
         root_dir: Path,
         search_dir: str | None = None,
         test_dir: str | None = None,
-        model_name: str | None = None,
+        strong_model_name: str | None = None,
+        weak_model_name: str | None = None,
         max_retries: int | None = None,
         ignore_list: set[str] = None,
         exclude_dot: bool | None = None,
@@ -21,19 +22,23 @@ class Config:
             root_dir: The project root.
             search_dir: A path relative to project_root, where the actual source code lives. Default: project_root / src
             test_dir: A path relative to project root, where tests are stored. Default: project_root / tests
-            model_name: The model to use. (CURRENTLY ONLY GEMINI API MODELS). Default: 'gemini-3.1-flash-lite'
+            strong_model_name: The model to use for tasks like fixing the code and creating tests. (CURRENTLY ONLY GEMINI API MODELS). Default: 'gemini-3.1-flash-lite'
+            weak_model_name: The model to use for detecting failures in tests. (CURRENTLY ONLY GEMINI API MODELS). Default: 'gemma-4-31b-it'
             max_retries: Maximum number of times the tests must fail to quit. Default: 10
             ignore_list: A set of file/folder names that will be excluded from being opened and searched. Default: {'__pycache', '.lock'}
             exclude_dot: A boolean that decides whether to exclude files/folders starting with '.' Default: True
         """
-        self.model_name = "gemini-3.1-flash-lite"
+        self.strong_model_name = "gemini-3.1-flash-lite"
+        self.weak_model_name = "gemma-4-31b-it"
         self.max_retries = 10
         self.ignore_list = {"__pycache__", ".lock"}
         self.exclude_dot = True
         self.root_dir = root_dir
 
-        if model_name:
-            self.model_name = model_name
+        if strong_model_name:
+            self.strong_model_name = strong_model_name
+        if weak_model_name:
+            self.weak_model_name = weak_model_name
         if max_retries:
             self.max_retries = max_retries
         if ignore_list:
