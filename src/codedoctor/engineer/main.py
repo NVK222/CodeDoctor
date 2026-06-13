@@ -18,23 +18,23 @@ import re
 
 cfg = Config(Path("/home/nkumar/projects/CodeDoctor/"))
 
-engineer = ChatGoogleGenerativeAI(model=cfg.model_name)
+model_engineer = ChatGoogleGenerativeAI(model=cfg.model_name)
 
-tools = [create_test, list_tests, list_src, edit_test, open_src]
-engineer_with_tools = engineer.bind_tools(tools)
+tools_engineer = [create_test, list_tests, list_src, edit_test, open_src]
+model_engineer_with_tools = model_engineer.bind_tools(tools_engineer)
 
 
-def engineer_node(state: EngineerState):
-    response = engineer_with_tools.invoke(
+def node_engineer(state: EngineerState):
+    response = model_engineer_with_tools.invoke(
         ([SystemMessage(content=prompt)]) + state.get("messages")
     )
     return {"messages": response}
 
 
-tool_node = ToolNode(tools, handle_tool_errors=True)
+node_tool = ToolNode(tools_engineer, handle_tool_errors=True)
 
 
-def test_node(state: EngineerState):
+def node_test(state: EngineerState):
     test_result = run_tests(cfg.test_dir)
     if "EXIT_CODE:1" in test_result:
         ctx = f"There are some issues in the test code. Here is the test output: {test_result}"
@@ -42,31 +42,35 @@ def test_node(state: EngineerState):
     return {"messages": [HumanMessage(content=test_result)]}
 
 
-def should_continue(state: EngineerState):
+def check_should_test(state: EngineerState):
     last_msg: AIMessage = state.get("messages")[-1]
     if last_msg.tool_calls:
-        return "tool_node"
-    return "test_node"
+        return "node_tool"
+    return "node_test"
 
 
-def should_end(state: EngineerState):
+def check_should_continue(state: EngineerState):
     last_msg: HumanMessage = state.get("messages")[-1].content
     if "EXIT_CODE:1" not in last_msg:
         return END
     if state.get("retry_count") >= state.get("cfg").max_retries:
         return END
-    return "engineer"
+    return "node_engineer"
 
 
 builder = StateGraph(EngineerState)
-builder.add_node("engineer", engineer_node)
-builder.add_node("test_node", test_node)
-builder.add_node("tool_node", tool_node)
+builder.add_node("node_engineer", node_engineer)
+builder.add_node("node_test", node_test)
+builder.add_node("node_tool", node_tool)
 
-builder.add_edge(START, "engineer")
-builder.add_conditional_edges("engineer", should_continue, ["tool_node", "test_node"])
-builder.add_edge("tool_node", "engineer")
-builder.add_conditional_edges("test_node", should_end, [END, "engineer"])
+builder.add_edge(START, "node_engineer")
+builder.add_conditional_edges(
+    "node_engineer", check_should_test, ["node_tool", "node_test"]
+)
+builder.add_edge("node_tool", "node_engineer")
+builder.add_conditional_edges(
+    "node_test", check_should_continue, [END, "node_engineer"]
+)
 
 graph = builder.compile()
 
@@ -80,7 +84,7 @@ for chunk in graph.stream(
 ):
     if chunk["type"] == "updates":
         for node_name, state in chunk["data"].items():
-            if node_name == "engineer":
+            if node_name == "node_engineer":
                 m = state.get("messages").content
                 tool_call = state.get("messages").tool_calls
 
@@ -105,14 +109,14 @@ for chunk in graph.stream(
                     if tool_name == "edit_test":
                         print(f"Engineer is editing test {tool_args.get('path')}")
 
-            if node_name == "tool_node":
+            if node_name == "node_tool":
                 m = state.get("messages")[0]
                 if getattr(m, "status", None) == "error":
                     print(f"Error: Tool {m.name} failed with : \n{m.content} ")
                 else:
                     print(f"Tool {m.name} executed successfully.")
 
-            if node_name == "test_node":
+            if node_name == "node_test":
                 m: str = state.get("messages")[0].content
                 if "EXIT_CODE:0" in m:
                     print("All tests passed successfully")
