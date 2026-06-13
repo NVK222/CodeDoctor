@@ -17,21 +17,14 @@ def create_test(src_path: str, code: str, runtime: ToolRuntime) -> str:
         A success confirmation string or a detailed error message.
     """
     cfg: Config = runtime.state.get("cfg")
-    try:
-        name = src_path.lstrip("/").replace("/", "_").replace("\\", "_")
-        name = f"test_{name}"
-        path = cfg.test_dir / name
-        write_to_file(str(path), code, cfg)
-        display_path = (
-            path.relative_to(cfg.root_dir)
-            if path.is_relative_to(cfg.root_dir)
-            else path
-        )
-        return (
-            f"Successfully created test file at '{display_path}' to test '{src_path}'."
-        )
-    except Exception as e:
-        return f"Error: {str(e)}"
+    name = src_path.lstrip("/").replace("/", "_").replace("\\", "_")
+    name = f"test_{name}"
+    path = cfg.test_dir / name
+    write_to_file(str(path), code, cfg)
+    display_path = (
+        path.relative_to(cfg.root_dir) if path.is_relative_to(cfg.root_dir) else path
+    )
+    return f"Successfully created test file at '{display_path}' to test '{src_path}'."
 
 
 @tool
@@ -68,13 +61,8 @@ def open_src(path: str, runtime: ToolRuntime) -> str:
     """
 
     cfg: Config = runtime.state.get("cfg")
-    try:
-        contents = read_file(path, cfg)
-        return contents
-    except FileNotFoundError:
-        return f"File not found at {path}. Make sure the path is correct."
-    except Exception as e:
-        return f"Error: {str(e)}"
+    contents = read_file(path, cfg)
+    return contents
 
 
 @tool
@@ -91,20 +79,15 @@ def edit_test(
         A success message or a detailed error message if the block wasn't found.
     """
     cfg: Config = runtime.state.get("cfg")
-    try:
-        contents = read_file(path, cfg)
+    contents = read_file(path, cfg)
 
-        occurences = contents.count(search_block)
-        if occurences == 0:
-            return f"Error: search block was not found in {path}. Make sure the indentation and spacing is correct"
+    occurences = contents.count(search_block)
+    if occurences == 0:
+        raise ValueError(
+            f"Error: search block was not found in {path}. Make sure the indentation and spacing is correct"
+        )
 
-        new_contents = contents.replace(search_block, replace_block)
+    new_contents = contents.replace(search_block, replace_block)
 
-        write_to_file(path, new_contents, cfg)
-        return f"Successfully updated {path}"
-
-    except FileNotFoundError:
-        return f"Error: File {path} not found. Make sure the name is right."
-
-    except Exception as e:
-        return f"Error while editing: {str(e)}"
+    write_to_file(path, new_contents, cfg)
+    return f"Successfully updated {path}"

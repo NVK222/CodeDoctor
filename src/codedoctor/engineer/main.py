@@ -31,7 +31,7 @@ def engineer_node(state: EngineerState):
     return {"messages": response}
 
 
-tool_node = ToolNode(tools)
+tool_node = ToolNode(tools, handle_tool_errors=True)
 
 
 def test_node(state: EngineerState):
@@ -39,8 +39,7 @@ def test_node(state: EngineerState):
     if "EXIT_CODE:1" in test_result:
         ctx = f"There are some issues in the test code. Here is the test output: {test_result}"
         return {"messages": [HumanMessage(content=ctx)]}
-    ctx = f"All tests passed successfully!\n{test_result}"
-    return {"messages": [HumanMessage(content=ctx)]}
+    return {"messages": [HumanMessage(content=test_result)]}
 
 
 def should_continue(state: EngineerState):
@@ -52,7 +51,7 @@ def should_continue(state: EngineerState):
 
 def should_end(state: EngineerState):
     last_msg: HumanMessage = state.get("messages")[-1].content
-    if "passed" in last_msg:
+    if "EXIT_CODE:1" not in last_msg:
         return END
     if state.get("retry_count") >= state.get("cfg").max_retries:
         return END
@@ -73,11 +72,7 @@ graph = builder.compile()
 
 print(f"Running Engineer on {cfg.root_dir}")
 
-messages = [
-    HumanMessage(
-        content="Create test for cli.py, making sure that that paths passed to it are correct after the config is created."
-    )
-]
+messages = [HumanMessage(content="Create tests for the utils")]
 for chunk in graph.stream(
     {"messages": messages, "cfg": cfg, "retry_count": 0},
     stream_mode="updates",
@@ -98,31 +93,29 @@ for chunk in graph.stream(
                     tool_args = tool.get("args")
 
                     if tool_name == "list_tests":
-                        print("Doctor is understanding the tests directory...")
+                        print("Engineer is understanding the tests directory...")
                     if tool_name == "list_src":
-                        print("Doctor is understanding the src directory...")
+                        print("Engineer is understanding the src directory...")
 
                     if tool_name == "create_test":
                         print(
-                            f"Doctor is creating test for {tool_args.get('src_path')}"
+                            f"Engineer is creating test for {tool_args.get('src_path')}"
                         )
 
                     if tool_name == "edit_test":
-                        print(f"Doctor is editing test {tool_args.get('path')}")
+                        print(f"Engineer is editing test {tool_args.get('path')}")
 
             if node_name == "tool_node":
                 m = state.get("messages")[0]
-                # Need more robust error checking
-                if "Error:" in m.content:
-                    print(m)
-                    print(f"Error: Tool {m.name} failed.")
+                if getattr(m, "status", None) == "error":
+                    print(f"Error: Tool {m.name} failed with : \n{m.content} ")
                 else:
                     print(f"Tool {m.name} executed successfully.")
 
             if node_name == "test_node":
                 m: str = state.get("messages")[0].content
-                if "passed" in m:
-                    print("ALL TESTS PASSED SUCCESSFULLY")
+                if "EXIT_CODE:0" in m:
+                    print("All tests passed successfully")
                 else:
                     print("\nFollowing Tests Failed\n")
                     failed = re.findall(r"^FAILED\s+(.+)$", m, re.MULTILINE)

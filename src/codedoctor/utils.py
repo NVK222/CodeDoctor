@@ -5,16 +5,12 @@ from codedoctor.config import Config
 
 
 def run_tests(test_dir: Path) -> str:
-    """
-    Runs tests on the whole project and returns the terminal output.
-    """
-
     result = subprocess.run(
         ["pytest", "-v", str(test_dir)], capture_output=True, text=True
     )
     output = f"STDOUT:\n{result.stdout}\nSTDERR:\n:{result.stderr}\nEXIT_CODE:{result.returncode}"
     if result.returncode == 0:
-        return f"All tests passed successfully\n{output}"
+        return output
     else:
         return f"Tests failed. Here is the output\n{output}"
 

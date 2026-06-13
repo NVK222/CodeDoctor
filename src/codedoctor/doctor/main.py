@@ -41,7 +41,7 @@ def main():
         )
         return {"messages": response}
 
-    tool_node = ToolNode(tools)
+    tool_node = ToolNode(tools, handle_tool_errors=True)
 
     def should_test(state: DoctorState):
         last_msg: ToolMessage = state.get("messages")[-1]
@@ -117,15 +117,14 @@ def main():
 
                 if node_name == "tool":
                     m = state.get("messages")[0]
-                    if "Error:" in m.content:
-                        print(m)
-                        print(f"Error: Tool {m.name} failed.")
+                    if getattr(m, "status", None) == "error":
+                        print(f"Error: Tool {m.name} failed with \n{m.content}")
                     else:
                         print(f"Tool {m.name} executed successfully.")
 
                 if node_name == "tester":
                     m: str = state.get("messages")[0].content
-                    if "passed" in m:
+                    if "EXIT_CODE:0" in m:
                         print("All tests passed successfully")
                     else:
                         print("Following Tests Failed")
