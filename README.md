@@ -19,7 +19,7 @@ usage: CodeDoctor [-h] [-s dir] [-t dir] [-sm model] [-wm model] [-r retries] [-
 
 positional arguments:
   root_dir              The root directory of the project
-  prompt                Prompt for the doctor
+  prompt                Prompt
 
 options:
   -h, --help            show this help message and exit
@@ -32,6 +32,17 @@ options:
                         The model to use for detecting failures in tests. (CURRENTLY GEMINI API MODELS ONLY). (DEFAULT: gemma-4-31b-it)
   -r, --max-retries retries
                         Maximum number of times the tests must fail to quit. (DEFAULT: 10)
-  -ig, --ignore list    A string of file/folder names that will be excluded from being readable & writable, separated by commas. (DEFAULT: __pycache__, uv.lock)
+  -ig, --ignore list    A string of file/folder names that will be excluded from being readable & writable, separated by commas. These will overwrite the dafaults and add
+                        to the ones declared in pyproject.toml (DEFAULT: __pycache__, uv.lock)
   -id, --include-dot    Include files/folders starting with '.'
 ```
+Options can also be declared in the **pyproject.toml** present in the root directory of the project as follows:
+```
+[tools.codedoctor]
+search_dir   = ""  # Same as -s
+test_dir     = ""  # Same as -t
+strong_model = ""  # Same as -sm
+weak_model   = ""  # Same as -wm
+max_retries  =     # Same as -r
+ignore       =     # Can be either a string separated by commas or a list of strings. These will be set as defaults and any ignore used in cli using -ig will append to this for that session
+include_dot  =     # Same as -id. Can be either true or false
