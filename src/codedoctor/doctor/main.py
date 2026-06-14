@@ -3,8 +3,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
-from codedoctor.cli import parse_args
-from codedoctor.config import Config
+from codedoctor.cli import initialize_config
 from codedoctor.doctor.prompts import prompt
 from codedoctor.state import DoctorState
 from codedoctor.doctor.tools import edit_file, list_all_files, open_file
@@ -13,18 +12,8 @@ import re
 
 
 def main():
-    args = parse_args()
 
-    cfg = Config(
-        args.root_dir,
-        args.search_dir,
-        args.test_dir,
-        args.strong_model,
-        args.weak_model,
-        args.max_retries,
-        args.ignore,
-        not args.include_dot,
-    )
+    cfg, user_prompt = initialize_config()
 
     pre_test_result = run_tests(cfg.test_dir)
     if "EXIT_CODE:0" in pre_test_result:
@@ -85,7 +74,7 @@ def main():
     failed = re.findall(r"^FAILED\s+(.+)$", pre_test_result, re.MULTILINE)
     summary = "\n".join(failed)
 
-    final_prompt = f"User's request: {args.prompt}\nCurrent test failures:\n{summary}\nFull test result:\n{pre_test_result}"
+    final_prompt = f"User's request: {user_prompt}\nCurrent test failures:\n{summary}\nFull test result:\n{pre_test_result}"
 
     messages = [HumanMessage(content=final_prompt)]
     graph_input = {"messages": messages, "cfg": cfg, "retry_count": 0}

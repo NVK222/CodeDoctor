@@ -2,8 +2,7 @@ from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import START, StateGraph, END
 from langgraph.prebuilt import ToolNode
-from codedoctor.cli import parse_args
-from codedoctor.config import Config
+from codedoctor.cli import initialize_config
 from codedoctor.engineer.prompts import prompt_auditor, prompt_engineer
 from codedoctor.engineer.tools import (
     create_test,
@@ -18,18 +17,7 @@ import re
 
 
 def main():
-    args = parse_args()
-
-    cfg = Config(
-        args.root_dir,
-        args.search_dir,
-        args.test_dir,
-        args.strong_model,
-        args.weak_model,
-        args.max_retries,
-        args.ignore,
-        not args.include_dot,
-    )
+    cfg, user_prompt = initialize_config()
 
     model_engineer = ChatGoogleGenerativeAI(model=cfg.strong_model_name)
     model_auditor = ChatGoogleGenerativeAI(model=cfg.weak_model_name)
@@ -91,7 +79,7 @@ def main():
 
     print(f"Running Engineer on {cfg.test_dir}")
 
-    messages = [HumanMessage(content=args.prompt)]
+    messages = [HumanMessage(content=user_prompt)]
     graph_input = {"messages": messages, "cfg": cfg, "retry_count": 0}
     for chunk in graph.stream(
         graph_input,
