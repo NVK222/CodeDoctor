@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 from pathlib import Path
 
+from codedoctor.broker import Broker
+
 load_dotenv()
 
 
@@ -34,6 +36,10 @@ class Config:
         self.ignore_list = {"__pycache__", ".lock"}
         self.exclude_dot = True
         self.root_dir = root_dir
+        self.broker = Broker()
+
+        self.notify = self.broker.notify
+        self.subscribe = self.broker.subscribe
 
         if strong_model_name:
             self.strong_model_name = strong_model_name
