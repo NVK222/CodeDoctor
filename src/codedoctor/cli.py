@@ -79,10 +79,7 @@ def parse_args():
     return args
 
 
-def initialize_config() -> tuple[Config, str]:
-    args = parse_args()
-
-    path_to_toml = Path(args.root_dir) / "pyproject.toml"
+def get_toml_data(path_to_toml: Path) -> dict[str]:
     if path_to_toml.exists():
         try:
             with open(path_to_toml, "rb") as f:
@@ -92,7 +89,10 @@ def initialize_config() -> tuple[Config, str]:
             toml_data = {}
     else:
         toml_data = {}
+    return toml_data
 
+
+def prepare_ignore_set_from_toml(toml_data: dict[str, str | list]) -> set[str]:
     toml_ignore = toml_data.get("ignore")
     ignore_set = set()
     if isinstance(toml_ignore, str):
@@ -101,15 +101,29 @@ def initialize_config() -> tuple[Config, str]:
         )
     elif isinstance(toml_ignore, list):
         ignore_set.update(str(item).strip() for item in toml_ignore)
+    return ignore_set
 
+
+def prepare_exclude_dot_from_toml(toml_data: dict[str, bool]) -> bool | None:
+    exclude_dot = None
+    if toml_data.get("include_dot") is not None:
+        exclude_dot = not toml_data.get("include_dot")
+    return exclude_dot
+
+
+def initialize_config() -> tuple[Config, str]:
+    args = parse_args()
+
+    path_to_toml = Path(args.root_dir) / "pyproject.toml"
+    toml_data = get_toml_data(path_to_toml)
+
+    ignore_set = prepare_ignore_set_from_toml(toml_data)
     if args.ignore is not None:
         ignore_set.update(args.ignore)
 
-    exclude_dot = None
+    exclude_dot = prepare_exclude_dot_from_toml(toml_data)
     if args.include_dot is not None:
         exclude_dot = not args.include_dot
-    elif toml_data.get("include_dot") is not None:
-        exclude_dot = not toml_data.get("include_dot")
 
     cfg = Config(
         args.root_dir,
