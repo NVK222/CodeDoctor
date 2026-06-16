@@ -2,8 +2,10 @@ import sys
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, START, END
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode
 from codedoctor.cli import initialize_config
+from codedoctor.config import Config
 from codedoctor.doctor.prompts import prompt
 from codedoctor.state import DoctorState
 from codedoctor.doctor.tools import edit_file, list_all_files, open_file
@@ -11,15 +13,75 @@ from codedoctor.utils import run_tests
 import re
 
 
-def main():
+def prepare_graph_input(pre_test_result: str, user_prompt: str, cfg: Config):
+    failed = re.findall(r"^FAILED\s+(.+)$", pre_test_result, re.MULTILINE)
+    summary = "\n".join(failed)
 
-    cfg, user_prompt = initialize_config()
+    final_prompt = f"User's request: {user_prompt}\nCurrent test failures:\n{summary}\nFull test result:\n{pre_test_result}"
 
+    messages = [HumanMessage(content=final_prompt)]
+    return {"messages": messages, "cfg": cfg, "retry_count": 0}
+
+
+def run_graph(
+    graph: CompiledStateGraph[DoctorState, None, DoctorState, DoctorState],
+    graph_input: dict[str, list[HumanMessage] | Config | int],
+    cfg: Config,
+):
+    print(f"Running CodeDoctor on the directory:  {cfg.search_dir}\n")
+
+    for chunk in graph.stream(graph_input, stream_mode="updates", version="v2"):
+        if chunk["type"] == "updates":
+            for node_name, state in chunk["data"].items():
+                if node_name == "node_doctor":
+                    m = state.get("messages").content
+                    tool_call = state.get("messages").tool_calls
+
+                    if m:
+                        print(f"\n[DOCTOR] :  {m[0].get('text')}")
+
+                    if tool_call:
+                        tool = tool_call[0]
+                        tool_name = tool.get("name")
+                        tool_args = tool.get("args")
+
+                        if tool_name == "list_all_files":
+                            print("Doctor is understanding the directory...")
+
+                        if tool_name == "open_file":
+                            print(f"Doctor is reading {tool_args.get('path')}")
+
+                        if tool_name == "edit_file":
+                            print(f"Doctor is editing {tool_args.get('path')}")
+
+                if node_name == "node_tool":
+                    m = state.get("messages")[0]
+                    if getattr(m, "status", None) == "error":
+                        print(f"Error: Tool {m.name} failed with \n{m.content}")
+                    else:
+                        print(f"Tool {m.name} executed successfully.")
+
+                if node_name == "node_test":
+                    m: str = state.get("messages")[0].content
+                    if "EXIT_CODE:0" in m:
+                        print("All tests passed successfully")
+                    else:
+                        print("Following Tests Failed")
+                        failed = re.findall(r"^FAILED\s+(.+)$", m, re.MULTILINE)
+                        for line in failed:
+                            print(line)
+                        print()
+
+
+def should_run_graph(cfg: Config) -> tuple[bool, str]:
     pre_test_result = run_tests(cfg.test_dir)
     if "EXIT_CODE:0" in pre_test_result:
         print("All tests are passing. Exiting")
-        sys.exit(0)
+        return (False, "")
+    return (True, pre_test_result)
 
+
+def create_graph(cfg: Config):
     model_doctor = ChatGoogleGenerativeAI(model=cfg.strong_model_name)
 
     tools_doctor = [list_all_files, open_file, edit_file]
@@ -71,57 +133,19 @@ def main():
 
     graph = graph_builder.compile()
 
-    failed = re.findall(r"^FAILED\s+(.+)$", pre_test_result, re.MULTILINE)
-    summary = "\n".join(failed)
+    return graph
 
-    final_prompt = f"User's request: {user_prompt}\nCurrent test failures:\n{summary}\nFull test result:\n{pre_test_result}"
 
-    messages = [HumanMessage(content=final_prompt)]
-    graph_input = {"messages": messages, "cfg": cfg, "retry_count": 0}
+def main():
+    cfg, user_prompt = initialize_config()
 
-    print(f"Running CodeDoctor on the directory:  {cfg.search_dir}\n")
+    should_continue, pre_test_result = should_run_graph(cfg)
+    if not should_continue:
+        sys.exit(0)
 
-    for chunk in graph.stream(graph_input, stream_mode="updates", version="v2"):
-        if chunk["type"] == "updates":
-            for node_name, state in chunk["data"].items():
-                if node_name == "node_doctor":
-                    m = state.get("messages").content
-                    tool_call = state.get("messages").tool_calls
-
-                    if m:
-                        print(f"\n[DOCTOR] :  {m[0].get('text')}")
-
-                    if tool_call:
-                        tool = tool_call[0]
-                        tool_name = tool.get("name")
-                        tool_args = tool.get("args")
-
-                        if tool_name == "list_all_files":
-                            print("Doctor is understanding the directory...")
-
-                        if tool_name == "open_file":
-                            print(f"Doctor is reading {tool_args.get('path')}")
-
-                        if tool_name == "edit_file":
-                            print(f"Doctor is editing {tool_args.get('path')}")
-
-                if node_name == "node_tool":
-                    m = state.get("messages")[0]
-                    if getattr(m, "status", None) == "error":
-                        print(f"Error: Tool {m.name} failed with \n{m.content}")
-                    else:
-                        print(f"Tool {m.name} executed successfully.")
-
-                if node_name == "node_test":
-                    m: str = state.get("messages")[0].content
-                    if "EXIT_CODE:0" in m:
-                        print("All tests passed successfully")
-                    else:
-                        print("Following Tests Failed")
-                        failed = re.findall(r"^FAILED\s+(.+)$", m, re.MULTILINE)
-                        for line in failed:
-                            print(line)
-                        print()
+    graph = create_graph(cfg)
+    graph_inputs = prepare_graph_input(pre_test_result, user_prompt, cfg)
+    run_graph(graph, graph_inputs, cfg)
 
 
 if __name__ == "__main__":
