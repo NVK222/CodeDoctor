@@ -14,7 +14,7 @@ from codedoctor.engineer.tools import (
     open_src,
 )
 from codedoctor.state import EngineerState
-from codedoctor.utils import run_tests
+from codedoctor.utils import print_to_terminal, run_tests
 import re
 
 
@@ -84,7 +84,7 @@ def run_graph(
     user_prompt: str,
     cfg: Config,
 ):
-    print(f"Running Engineer on {cfg.test_dir}")
+    cfg.notify(f"Running Engineer on {cfg.test_dir}")
 
     messages = [HumanMessage(content=user_prompt)]
     graph_input = {"messages": messages, "cfg": cfg, "retry_count": 0}
@@ -100,7 +100,7 @@ def run_graph(
                     tool_call = state.get("messages").tool_calls
 
                     if m:
-                        print(f"\n[ENGINEER] :  {m[0].get('text')}")
+                        cfg.notify(f"\n[ENGINEER] :  {m[0].get('text')}")
 
                     if tool_call:
                         tool = tool_call[0]
@@ -108,39 +108,44 @@ def run_graph(
                         tool_args = tool.get("args")
 
                         if tool_name == "list_tests":
-                            print("Engineer is understanding the tests directory...")
+                            cfg.notify(
+                                "Engineer is understanding the tests directory..."
+                            )
                         if tool_name == "list_src":
-                            print("Engineer is understanding the src directory...")
+                            cfg.notify("Engineer is understanding the src directory...")
 
                         if tool_name == "create_test":
-                            print(
+                            cfg.notify(
                                 f"Engineer is creating test for {tool_args.get('src_path')}"
                             )
 
                         if tool_name == "edit_test":
-                            print(f"Engineer is editing test {tool_args.get('path')}")
+                            cfg.notify(
+                                f"Engineer is editing test {tool_args.get('path')}"
+                            )
 
                 if node_name == "node_tool":
                     m = state.get("messages")[0]
                     if getattr(m, "status", None) == "error":
-                        print(f"Error: Tool {m.name} failed with : \n{m.content} ")
+                        cfg.notify(f"Error: Tool {m.name} failed with : \n{m.content} ")
                     else:
-                        print(f"Tool {m.name} executed successfully.")
+                        cfg.notify(f"Tool {m.name} executed successfully.")
 
                 if node_name == "node_test":
                     m: str = state.get("messages")[0].content
                     if "EXIT_CODE:0" in m:
-                        print("All tests passed successfully")
+                        cfg.notify("All tests passed successfully")
                     else:
-                        print("\nFollowing Tests Failed\n")
+                        cfg.notify("\nFollowing Tests Failed\n")
                         failed = re.findall(r"^FAILED\s+(.+)$", m, re.MULTILINE)
                         for line in failed:
-                            print(line)
-                        print("\n\n")
+                            cfg.notify(line)
+                        cfg.notify("")
 
 
 def main():
     cfg, user_prompt = initialize_config()
+    cfg.subscribe(print_to_terminal)
     graph = create_graph(cfg)
     run_graph(graph, user_prompt, cfg)
 

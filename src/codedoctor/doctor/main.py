@@ -9,7 +9,7 @@ from codedoctor.config import Config
 from codedoctor.doctor.prompts import prompt
 from codedoctor.state import DoctorState
 from codedoctor.doctor.tools import edit_file, list_all_files, open_file
-from codedoctor.utils import run_tests
+from codedoctor.utils import print_to_terminal, run_tests
 import re
 
 
@@ -28,7 +28,7 @@ def run_graph(
     graph_input: dict[str, list[HumanMessage] | Config | int],
     cfg: Config,
 ):
-    print(f"Running CodeDoctor on the directory:  {cfg.search_dir}\n")
+    cfg.notify(f"Running CodeDoctor on the directory:  {cfg.search_dir}\n")
 
     for chunk in graph.stream(graph_input, stream_mode="updates", version="v2"):
         if chunk["type"] == "updates":
@@ -38,7 +38,7 @@ def run_graph(
                     tool_call = state.get("messages").tool_calls
 
                     if m:
-                        print(f"\n[DOCTOR] :  {m[0].get('text')}")
+                        cfg.notify(f"\n[DOCTOR] :  {m[0].get('text')}")
 
                     if tool_call:
                         tool = tool_call[0]
@@ -46,37 +46,37 @@ def run_graph(
                         tool_args = tool.get("args")
 
                         if tool_name == "list_all_files":
-                            print("Doctor is understanding the directory...")
+                            cfg.notify("Doctor is understanding the directory...")
 
                         if tool_name == "open_file":
-                            print(f"Doctor is reading {tool_args.get('path')}")
+                            cfg.notify(f"Doctor is reading {tool_args.get('path')}")
 
                         if tool_name == "edit_file":
-                            print(f"Doctor is editing {tool_args.get('path')}")
+                            cfg.notify(f"Doctor is editing {tool_args.get('path')}")
 
                 if node_name == "node_tool":
                     m = state.get("messages")[0]
                     if getattr(m, "status", None) == "error":
-                        print(f"Error: Tool {m.name} failed with \n{m.content}")
+                        cfg.notify(f"Error: Tool {m.name} failed with \n{m.content}")
                     else:
-                        print(f"Tool {m.name} executed successfully.")
+                        cfg.notify(f"Tool {m.name} executed successfully.")
 
                 if node_name == "node_test":
                     m: str = state.get("messages")[0].content
                     if "EXIT_CODE:0" in m:
-                        print("All tests passed successfully")
+                        cfg.notify("All tests passed successfully")
                     else:
-                        print("Following Tests Failed")
+                        cfg.notify("Following Tests Failed")
                         failed = re.findall(r"^FAILED\s+(.+)$", m, re.MULTILINE)
                         for line in failed:
-                            print(line)
-                        print()
+                            cfg.notify(line)
+                        cfg.notify("")
 
 
 def should_run_graph(cfg: Config) -> tuple[bool, str]:
     pre_test_result = run_tests(cfg.test_dir)
     if "EXIT_CODE:0" in pre_test_result:
-        print("All tests are passing. Exiting")
+        cfg.notify("All tests are passing. Exiting")
         return (False, "")
     return (True, pre_test_result)
 
@@ -138,6 +138,7 @@ def create_graph(cfg: Config):
 
 def main():
     cfg, user_prompt = initialize_config()
+    cfg.subscribe(print_to_terminal)
 
     should_continue, pre_test_result = should_run_graph(cfg)
     if not should_continue:

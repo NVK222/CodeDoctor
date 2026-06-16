@@ -1,6 +1,6 @@
 from pathlib import Path
 import subprocess
-
+from datetime import datetime
 from codedoctor.config import Config
 
 
@@ -13,6 +13,10 @@ def run_tests(test_dir: Path) -> str:
         return output
     else:
         return f"Tests failed. Here is the output\n{output}"
+
+
+def print_to_terminal(message: str) -> None:
+    print(f"[{datetime.now().strftime('%d-%m-%Y %H:%M:%S')}]\t{message}")
 
 
 def read_file(path: str, cfg: Config) -> str:
