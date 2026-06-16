@@ -1,8 +1,10 @@
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import START, StateGraph, END
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode
 from codedoctor.cli import initialize_config
+from codedoctor.config import Config
 from codedoctor.engineer.prompts import prompt_auditor, prompt_engineer
 from codedoctor.engineer.tools import (
     create_test,
@@ -16,9 +18,7 @@ from codedoctor.utils import run_tests
 import re
 
 
-def main():
-    cfg, user_prompt = initialize_config()
-
+def create_graph(cfg: Config):
     model_engineer = ChatGoogleGenerativeAI(model=cfg.strong_model_name)
     model_auditor = ChatGoogleGenerativeAI(model=cfg.weak_model_name)
 
@@ -76,7 +76,14 @@ def main():
     )
 
     graph = builder.compile()
+    return graph
 
+
+def run_graph(
+    graph: CompiledStateGraph[EngineerState, None, EngineerState, EngineerState],
+    user_prompt: str,
+    cfg: Config,
+):
     print(f"Running Engineer on {cfg.test_dir}")
 
     messages = [HumanMessage(content=user_prompt)]
@@ -130,6 +137,12 @@ def main():
                         for line in failed:
                             print(line)
                         print("\n\n")
+
+
+def main():
+    cfg, user_prompt = initialize_config()
+    graph = create_graph(cfg)
+    run_graph(graph, user_prompt, cfg)
 
 
 if __name__ == "__main__":
