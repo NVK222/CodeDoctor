@@ -46,3 +46,32 @@ weak_model   = ""  # Same as -wm
 max_retries  =     # Same as -r
 ignore       =     # Can be either a string separated by commas or a list of strings. These will be set as defaults and any ignore used in cli using -ig will append to this for that session
 include_dot  =     # Same as -id. Can be either true or false
+```
+# API Routes
+Use `uv run fastapi dev` to start the FastAPI backend.  
+* POST `http://localhost:8000/api/doctor` to call the doctor.
+  > Example using curl:
+  ```
+  curl -X 'POST' \
+  'http://localhost:8000/api/doctor' \
+  -H 'accept: text/event-stream' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "root_dir": "path/to/root/dir",
+  "user_prompt": ""
+  }'
+  ```
+
+* POST `http://localhost:8000/api/engineer` to call the engineer.
+  > Example using curl
+  ```
+  curl -X 'POST' \
+  'http://localhost:8000/api/engineer' \
+  -H 'accept: text/event-stream' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "root_dir": "path/to/root/dir",
+  "user_prompt": ""
+  }'
+  ```
+The rest of the options will be read from pyproject.toml in the root_dir
