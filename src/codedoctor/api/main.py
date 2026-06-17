@@ -21,12 +21,16 @@ from codedoctor.engineer.main import (
     create_graph as engineer_create_graph,
     run_graph as engineer_run_graph,
 )
+from codedoctor.api.schemas import DoctorRequest, EngineerRequest
 
 app = FastAPI()
 
 
 @app.post("/api/doctor", response_class=EventSourceResponse)
-async def post_doctor(root_dir: str, prompt: str) -> AsyncIterable[ServerSentEvent]:
+async def post_doctor(req: DoctorRequest) -> AsyncIterable[ServerSentEvent]:
+    root_dir = req.root_dir
+    user_prompt = req.user_prompt
+
     path_to_toml = Path(root_dir) / "pyproject.toml"
     toml_data = get_toml_data(path_to_toml)
     ignore_set = prepare_ignore_set_from_toml(toml_data)
@@ -41,6 +45,7 @@ async def post_doctor(root_dir: str, prompt: str) -> AsyncIterable[ServerSentEve
         ignore_set,
         exclude_dot,
     )
+
     should_continue, pre_test_result = doctor_should_run_graph(cfg)
     if not should_continue:
         yield ServerSentEvent(data="All tests passing. Exiting.", event="done")
@@ -54,7 +59,7 @@ async def post_doctor(root_dir: str, prompt: str) -> AsyncIterable[ServerSentEve
     cfg.subscribe(callback)
 
     graph = doctor_create_graph(cfg)
-    graph_inputs = doctor_prepare_graph_input(pre_test_result, prompt, cfg)
+    graph_inputs = doctor_prepare_graph_input(pre_test_result, user_prompt, cfg)
     graph_task = create_task(to_thread(doctor_run_graph, graph, graph_inputs, cfg))
 
     try:
@@ -72,7 +77,10 @@ async def post_doctor(root_dir: str, prompt: str) -> AsyncIterable[ServerSentEve
 
 
 @app.post("/api/engineer", response_class=EventSourceResponse)
-async def post_engineer(root_dir: str, prompt: str) -> AsyncIterable[ServerSentEvent]:
+async def post_engineer(req: EngineerRequest) -> AsyncIterable[ServerSentEvent]:
+    root_dir = req.root_dir
+    user_prompt = req.user_prompt
+
     path_to_toml = Path(root_dir) / "pyproject.toml"
     toml_data = get_toml_data(path_to_toml)
     ignore_set = prepare_ignore_set_from_toml(toml_data)
@@ -87,6 +95,7 @@ async def post_engineer(root_dir: str, prompt: str) -> AsyncIterable[ServerSentE
         ignore_set,
         exclude_dot,
     )
+
     q = Queue()
 
     def callback(message: str):
@@ -95,7 +104,7 @@ async def post_engineer(root_dir: str, prompt: str) -> AsyncIterable[ServerSentE
     cfg.subscribe(callback)
 
     graph = engineer_create_graph(cfg)
-    graph_task = create_task(to_thread(engineer_run_graph, graph, prompt, cfg))
+    graph_task = create_task(to_thread(engineer_run_graph, graph, user_prompt, cfg))
 
     try:
         while not graph_task.done() or not q.empty():
