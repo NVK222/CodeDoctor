@@ -24,3 +24,5 @@ build-backend = "uv_build"
 doctor = "codedoctor.doctor.cli:main"
 engineer = "codedoctor.engineer.cli:main"
 
+[tool.fastapi]
+entrypoint = "codedoctor.api.main:app"
