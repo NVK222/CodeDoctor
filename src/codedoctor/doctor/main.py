@@ -1,15 +1,13 @@
-import sys
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode
-from codedoctor.cli import initialize_config
 from codedoctor.config import Config
 from codedoctor.doctor.prompts import prompt
 from codedoctor.state import DoctorState
 from codedoctor.doctor.tools import edit_file, list_all_files, open_file
-from codedoctor.utils import print_to_terminal, run_tests
+from codedoctor.utils import run_tests
 import re
 
 
@@ -134,20 +132,3 @@ def create_graph(cfg: Config):
     graph = graph_builder.compile()
 
     return graph
-
-
-def main():
-    cfg, user_prompt = initialize_config()
-    cfg.subscribe(print_to_terminal)
-
-    should_continue, pre_test_result = should_run_graph(cfg)
-    if not should_continue:
-        sys.exit(0)
-
-    graph = create_graph(cfg)
-    graph_inputs = prepare_graph_input(pre_test_result, user_prompt, cfg)
-    run_graph(graph, graph_inputs, cfg)
-
-
-if __name__ == "__main__":
-    main()

@@ -3,7 +3,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import START, StateGraph, END
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode
-from codedoctor.cli import initialize_config
 from codedoctor.config import Config
 from codedoctor.engineer.prompts import prompt_auditor, prompt_engineer
 from codedoctor.engineer.tools import (
@@ -14,7 +13,7 @@ from codedoctor.engineer.tools import (
     open_src,
 )
 from codedoctor.state import EngineerState
-from codedoctor.utils import print_to_terminal, run_tests
+from codedoctor.utils import run_tests
 import re
 
 
@@ -141,14 +140,3 @@ def run_graph(
                         for line in failed:
                             cfg.notify(line)
                         cfg.notify("")
-
-
-def main():
-    cfg, user_prompt = initialize_config()
-    cfg.subscribe(print_to_terminal)
-    graph = create_graph(cfg)
-    run_graph(graph, user_prompt, cfg)
-
-
-if __name__ == "__main__":
-    main()
