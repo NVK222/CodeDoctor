@@ -4,15 +4,23 @@ from datetime import datetime
 from codedoctor.config import Config
 
 
+success_exit_codes = ["EXIT_CODE:0", "EXIT_CODE:5"]
+
+
+def is_test_successful(
+    test_result: str, success_exit_codes: list[str] = success_exit_codes
+) -> bool:
+    if any(exit_code in test_result for exit_code in success_exit_codes):
+        return True
+    return False
+
+
 def run_tests(test_dir: Path) -> str:
     result = subprocess.run(
         ["pytest", "-v", "--no-header", str(test_dir)], capture_output=True, text=True
     )
     output = f"STDOUT:\n{result.stdout}\nSTDERR:\n:{result.stderr}\nEXIT_CODE:{result.returncode}"
-    if result.returncode == 0:
-        return output
-    else:
-        return f"Tests failed. Here is the output\n{output}"
+    return output
 
 
 def print_to_terminal(message: str) -> None:

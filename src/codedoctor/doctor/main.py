@@ -7,7 +7,7 @@ from codedoctor.config import Config
 from codedoctor.doctor.prompts import prompt
 from codedoctor.state import DoctorState
 from codedoctor.doctor.tools import edit_file, list_all_files, open_file
-from codedoctor.utils import run_tests
+from codedoctor.utils import is_test_successful, run_tests
 import re
 
 
@@ -61,7 +61,7 @@ def run_graph(
 
                 if node_name == "node_test":
                     m: str = state.get("messages")[0].content
-                    if "EXIT_CODE:0" in m:
+                    if is_test_successful(m):
                         cfg.notify("All tests passed successfully")
                     else:
                         cfg.notify("Following Tests Failed")
@@ -73,7 +73,7 @@ def run_graph(
 
 def should_run_graph(cfg: Config) -> tuple[bool, str]:
     pre_test_result = run_tests(cfg.test_dir)
-    if "EXIT_CODE:0" in pre_test_result:
+    if is_test_successful(pre_test_result):
         cfg.notify("All tests are passing. Exiting")
         return (False, "")
     return (True, pre_test_result)
@@ -95,11 +95,15 @@ def create_graph(cfg: Config):
 
     def node_test(state: DoctorState):
         test_result = run_tests(cfg.test_dir)
-        if "EXIT_CODE:0" in test_result:
+        if is_test_successful(test_result):
             ctx = "All tests passed successfully! Do not call any more tools. You are completely done. Provide your final text summary now."
             return {"messages": [HumanMessage(content=ctx)]}
         return {
-            "messages": [HumanMessage(content=test_result)],
+            "messages": [
+                HumanMessage(
+                    content=f"Tests failed. Here are the test results:\n{test_result}"
+                )
+            ],
             "retry_count": state.get("retry_count", 0) + 1,
         }
 

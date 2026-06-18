@@ -13,7 +13,7 @@ from codedoctor.engineer.tools import (
     open_src,
 )
 from codedoctor.state import EngineerState
-from codedoctor.utils import run_tests
+from codedoctor.utils import is_test_successful, run_tests
 import re
 
 
@@ -34,7 +34,7 @@ def create_graph(cfg: Config):
 
     def node_test(state: EngineerState):
         test_result = run_tests(cfg.test_dir)
-        if "EXIT_CODE:1" in test_result:
+        if not is_test_successful(test_result, ["EXIT_CODE:0"]):
             ctx = f"There are some issues in the test code. Here is the test output: {test_result}"
             return {"messages": [HumanMessage(content=ctx)]}
         return {"messages": [HumanMessage(content=test_result)]}
@@ -47,7 +47,7 @@ def create_graph(cfg: Config):
 
     def check_should_continue(state: EngineerState):
         last_msg: HumanMessage = state.get("messages")[-1].text
-        if "EXIT_CODE:0" in last_msg:
+        if is_test_successful(last_msg, ["EXIT_CODE:0"]):
             return END
         if state.get("retry_count") >= state.get("cfg").max_retries:
             return END
@@ -132,7 +132,7 @@ def run_graph(
 
                 if node_name == "node_test":
                     m: str = state.get("messages")[0].content
-                    if "EXIT_CODE:0" in m:
+                    if is_test_successful(m, ["EXIT_CODE:0"]):
                         cfg.notify("All tests passed successfully")
                     else:
                         cfg.notify("\nFollowing Tests Failed\n")
