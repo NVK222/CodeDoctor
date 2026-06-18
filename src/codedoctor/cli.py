@@ -1,6 +1,8 @@
 import argparse
 from pathlib import Path
 import tomllib
+import urllib.parse
+import webbrowser
 
 from codedoctor.config import Config
 
@@ -137,3 +139,19 @@ def initialize_config() -> tuple[Config, str]:
     )
 
     return (cfg, args.prompt)
+
+
+def run_gui():
+    parser = argparse.ArgumentParser("CodeDoctor")
+
+    parser.add_argument(
+        "root_dir",
+        help="The root directory of the project",
+        type=lambda p: Path(p).resolve(),
+    )
+
+    args = parser.parse_args()
+    path = str(args.root_dir)
+
+    url = f"http://localhost:5173/?root_dir={urllib.parse.quote(path, safe='')}"
+    webbrowser.open(url)
