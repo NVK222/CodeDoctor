@@ -1,11 +1,20 @@
 from pydantic import BaseModel
 
 
-class DoctorRequest(BaseModel):
+class BaseRequest(BaseModel):
     root_dir: str
-    user_prompt: str
+    search_dir: str | None = None
+    test_dir: str | None = None
+    max_retries: int | None = None
+    include_dot: bool | None = None
+    ignore: set[str] | list[str] | str | None = None
+    strong_model: str | None = None
+    weak_model: str | None = None
 
 
-class EngineerRequest(BaseModel):
-    root_dir: str
+class DoctorRequest(BaseRequest):
+    user_prompt: str | None = None
+
+
+class EngineerRequest(BaseRequest):
     user_prompt: str

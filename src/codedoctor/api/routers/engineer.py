@@ -25,13 +25,31 @@ async def post_engineer(req: EngineerRequest) -> AsyncIterable[ServerSentEvent]:
     toml_data = get_toml_data(path_to_toml)
     ignore_set = prepare_ignore_set_from_toml(toml_data)
     exclude_dot = prepare_exclude_dot_from_toml(toml_data)
+
+    search_dir = req.search_dir or toml_data.get("search_dir")
+    test_dir = req.test_dir or toml_data.get("test_dir")
+    strong_model = req.strong_model or toml_data.get("strong_model")
+    weak_model = req.weak_model or toml_data.get("weak_model")
+    max_retries = req.max_retries or toml_data.get("max_retries")
+
+    if req.ignore:
+        if isinstance(req.ignore, str):
+            ignore_set.update(
+                item.strip() for item in req.ignore.split(",") if item.strip()
+            )
+        elif isinstance(req.ignore, list):
+            ignore_set.update(str(item).strip() for item in req.ignore)
+
+    if req.include_dot is not None:
+        exclude_dot = not req.include_dot
+
     cfg = Config(
         root_dir,
-        toml_data.get("search_dir"),
-        toml_data.get("test_dir"),
-        toml_data.get("strong_model"),
-        toml_data.get("weak_model"),
-        toml_data.get("max_retries"),
+        search_dir,
+        test_dir,
+        strong_model,
+        weak_model,
+        max_retries,
         ignore_set,
         exclude_dot,
     )
