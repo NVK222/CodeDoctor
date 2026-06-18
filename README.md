@@ -57,11 +57,19 @@ Use `uv run fastapi dev` to start the FastAPI backend.
   -H 'accept: text/event-stream' \
   -H 'Content-Type: application/json' \
   -d '{
-  "root_dir": "path/to/root/dir",
-  "user_prompt": ""
+  "root_dir": "string",
+  "search_dir": "string",
+  "test_dir": "string",
+  "max_retries": 0,
+  "include_dot": true,
+  "ignore": [
+    "string"
+  ],
+  "strong_model": "string",
+  "weak_model": "string",
+  "user_prompt": "string"
   }'
   ```
-
 * POST `http://localhost:8000/api/engineer` to call the engineer.
   > Example using curl
   ```
@@ -70,8 +78,25 @@ Use `uv run fastapi dev` to start the FastAPI backend.
   -H 'accept: text/event-stream' \
   -H 'Content-Type: application/json' \
   -d '{
-  "root_dir": "path/to/root/dir",
-  "user_prompt": ""
+  "root_dir": "string",
+  "search_dir": "string",
+  "test_dir": "string",
+  "max_retries": 0,
+  "include_dot": true,
+  "ignore": [
+    "string"
+  ],
+  "strong_model": "string",
+  "weak_model": "string",
+  "user_prompt": "string"
   }'
   ```
-The rest of the options will be read from pyproject.toml in the root_dir
+* GET `http://localhost:8000/api/context?root_dir=path/to/root/dir` to return the config at root dir
+  > Example using curl
+  ```
+  curl -X 'GET' \
+  'http://localhost:8000/api/context?root_dir=string' \
+  -H 'accept: application/json'
+  ```
+  If config options are supplied in the POST requests they will be used, else the options in `pyproject.toml` if they exist. If not the default options.
+  For the ignore list, it will be merged with the ignore defined in the `pyproject.toml` like the CLI.
