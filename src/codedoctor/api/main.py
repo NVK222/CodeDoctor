@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from codedoctor.api.routers.context import context_router
 from codedoctor.api.routers.doctor import doctor_router
 from codedoctor.api.routers.engineer import engineer_router
 
@@ -16,3 +17,4 @@ app.add_middleware(
 )
 app.include_router(doctor_router)
 app.include_router(engineer_router)
+app.include_router(context_router)

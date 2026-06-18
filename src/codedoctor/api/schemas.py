@@ -18,3 +18,13 @@ class DoctorRequest(BaseRequest):
 
 class EngineerRequest(BaseRequest):
     user_prompt: str
+
+
+class ContextSchema(BaseModel):
+    search_dir: str
+    test_dir: str
+    max_retries: int
+    include_dot: bool
+    ignore: set[str] | list[str] | str
+    strong_model: str
+    weak_model: str
