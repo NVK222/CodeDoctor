@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { SSE } from "sse.js"
 
 interface Config {
     search_dir: string,
@@ -22,6 +23,22 @@ function App() {
         e.preventDefault()
         setIsDoctorRunning(true)
         setLogs(["Connecting to API..."])
+
+        let src = new SSE("http://localhost:8000/api/doctor", {
+            headers: { "Content-Type": "application/json" },
+            payload: `{"root_dir": "${root_dir}", "user_prompt": "${doctorPrompt}"}`,
+        })
+
+        src.addEventListener("done", (r) => {
+            const payload = JSON.parse(r.data)
+            setLogs((prevLogs) => [...prevLogs, `${payload}`])
+            setIsDoctorRunning(false)
+        })
+
+        src.addEventListener("log", (r) => {
+            const payload = JSON.parse(r.data)
+            setLogs((prevLogs) => [...prevLogs, `${payload}`])
+        })
     }
 
     if (!root_dir) {
@@ -87,6 +104,7 @@ function App() {
                         logs.map((log, idx) => (
                             <div key={idx}>
                                 <span>{new Date().toLocaleTimeString()}</span>
+                                <span> </span>
                                 <span>{log}</span>
                             </div>
                         ))
