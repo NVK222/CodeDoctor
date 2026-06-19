@@ -13,8 +13,16 @@ interface Config {
 function App() {
     const queryParams = new URLSearchParams(window.location.search)
     const root_dir = queryParams.get("root_dir")
-
     const [cfg, setCfg] = useState<Config>()
+    const [doctorPrompt, setDoctorPrompt] = useState<string>("")
+    const [isDoctorRunning, setIsDoctorRunning] = useState<boolean>(false)
+    const [logs, setLogs] = useState<string[]>([])
+
+    const handleRunDoctor = (e: React.SubmitEvent) => {
+        e.preventDefault()
+        setIsDoctorRunning(true)
+        setLogs(["Connecting to API..."])
+    }
 
     if (!root_dir) {
         return (
@@ -41,7 +49,7 @@ function App() {
 
 
     return (
-        <div className="flex bg-slate-700 min-h-screen">
+        <div className="flex bg-slate-700 min-h-screen text-slate-300">
             <aside className="max-w-1/4 bg-slate-900 text-white p-2 text-xl">
                 <div>
                     <p>{decodeURIComponent(root_dir)}</p>
@@ -57,9 +65,34 @@ function App() {
                     <p>Include Dot :  {String(cfg.include_dot)}</p>
                     <p>Ignore :  {cfg.ignore.join(", ")}</p>
                 </div>}
-
             </aside >
-            <hr />
+
+            <main className="flex flex-1 flex-col p-8 gap-6 max-w-5xl mx-auto w-full">
+                <header className="flex justify-between items-center border-b border-slate-800 pb-4">
+                    <h1 className="font-bold text-8xl tracking-tight">CodeDoctor</h1>
+                </header>
+
+                <div>
+                    <h2 className="font-bold text-2xl text-white py-4">Doctor</h2>
+                    <form className="flex flex-col gap-1 border border-slate-700 rounded-2xl p-4 shadow-xl" onSubmit={handleRunDoctor}>
+                        <label className="text-sm font-semibold text-slate-300">Custom instructions for doctor</label>
+                        <textarea placeholder="Type your custom instructions" className="bg-slate-900 border border-slate-700 rounded-lg p-4 text-sm focus:outline-none focus:border-emerald-500 resize-none disabled:opacity-50 transition-colors" value={doctorPrompt} onChange={(e) => setDoctorPrompt(e.target.value)} disabled={isDoctorRunning} rows={2} />
+
+                        <button type="submit" disabled={isDoctorRunning} className={`w-full py-4 rounded-lg text-sm font-semibold shadow-md transition-all ${isDoctorRunning ? "bg-slate-700 text-slate-300 cursor-not-allowed animate-pulse" : "bg-emerald-500 text-white font-bold tracking-wide"}`}>{isDoctorRunning ? "Running..." : "Execute"}</button>
+                    </form>
+                </div>
+
+                <div className="p-4 flex-1 overflow-y-auto text-sm text-emerald-300 rounded-lg shadow-xl">
+                    {logs.length === 0 ? (<p>No logs</p>) : (
+                        logs.map((log, idx) => (
+                            <div key={idx}>
+                                <span>{new Date().toLocaleTimeString()}</span>
+                                <span>{log}</span>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </main >
         </div >
     )
 }
