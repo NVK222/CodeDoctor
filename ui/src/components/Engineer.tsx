@@ -1,12 +1,12 @@
 
 import { useState } from "react"
-import type { Config } from "../types"
+import type { Config, LogEntry } from "../types"
 import { SSE, type SSEvent } from "sse.js"
 import Executor from "./Executor"
 
 interface EngineerProps {
     cfg: Config,
-    setLogs: React.Dispatch<React.SetStateAction<string[]>>
+    setLogs: React.Dispatch<React.SetStateAction<LogEntry[]>>
 }
 
 export default function Engineer({ cfg, setLogs }: EngineerProps) {
@@ -15,7 +15,7 @@ export default function Engineer({ cfg, setLogs }: EngineerProps) {
     const handleRunEngineer = (e: React.SubmitEvent) => {
         e.preventDefault()
         setIsEngineerRunning(true)
-        setLogs(["Connecting to API..."])
+        setLogs((prevLogs) => [...prevLogs, { text: "Connecting to API...", ts: new Date().toLocaleTimeString() }])
 
         let src = new SSE("http://localhost:8000/api/engineer", {
             headers: { "Content-Type": "application/json" },
@@ -34,13 +34,13 @@ export default function Engineer({ cfg, setLogs }: EngineerProps) {
 
         src.addEventListener("done", (r: SSEvent) => {
             const payload = JSON.parse(r.data)
-            setLogs((prevLogs) => [...prevLogs, `${payload}`])
+            setLogs((prevLogs) => [...prevLogs, { text: `${payload}`, ts: new Date().toLocaleTimeString() }])
             setIsEngineerRunning(false)
         })
 
         src.addEventListener("log", (r: SSEvent) => {
             const payload = JSON.parse(r.data)
-            setLogs((prevLogs) => [...prevLogs, `${payload}`])
+            setLogs((prevLogs) => [...prevLogs, { text: `${payload}`, ts: new Date().toLocaleTimeString() }])
         })
     }
 

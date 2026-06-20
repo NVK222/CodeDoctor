@@ -8,3 +8,8 @@ export interface Config {
     include_dot: boolean,
     ignore: string[]
 }
+
+export interface LogEntry {
+    text: string,
+    ts: string
+}

@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from "react";
+import type { LogEntry } from "../types";
 
 const PANES = ["doctor", "engineer"] as const
 type Panes = typeof PANES[number]
 
 interface LogsProps {
-    doctorLogs: string[]
-    engineerLogs: string[],
+    doctorLogs: LogEntry[]
+    engineerLogs: LogEntry[],
 }
 
 interface PaneProps {
-    logs: string[]
+    logs: LogEntry[]
 }
 
 export default function Logs({ doctorLogs, engineerLogs }: LogsProps) {
     const [currentPaneName, setCurrentPaneName] = useState<Panes>("doctor")
-    let logs: string[];
+    let logs: LogEntry[];
     switch (currentPaneName) {
         case "doctor":
             logs = doctorLogs
@@ -55,9 +56,9 @@ function Pane({ logs }: PaneProps) {
             {logs.length === 0 ? (<p>No logs</p>) : (
                 logs.map((log, idx) => (
                     <div key={idx}>
-                        <span className="text-emerald-300">{new Date().toLocaleTimeString()}</span>
+                        <span className="text-emerald-300">{log.ts}</span>
                         <span> </span>
-                        <span className="text-slate-300">{log}</span>
+                        <span className="text-slate-300">{log.text}</span>
                     </div>
                 ))
             )}

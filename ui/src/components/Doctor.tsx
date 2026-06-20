@@ -1,11 +1,11 @@
 import { useState } from "react"
-import type { Config } from "../types"
+import type { Config, LogEntry } from "../types"
 import { SSE, type SSEvent } from "sse.js"
 import Executor from "./Executor"
 
 interface DoctorProps {
     cfg: Config,
-    setLogs: React.Dispatch<React.SetStateAction<string[]>>
+    setLogs: React.Dispatch<React.SetStateAction<LogEntry[]>>
 }
 
 export default function Doctor({ cfg, setLogs }: DoctorProps) {
@@ -14,7 +14,7 @@ export default function Doctor({ cfg, setLogs }: DoctorProps) {
     const handleRunDoctor = (e: React.SubmitEvent) => {
         e.preventDefault()
         setIsDoctorRunning(true)
-        setLogs(["Connecting to API..."])
+        setLogs((prevLogs) => [...prevLogs, { text: "Connecting to API...", ts: new Date().toLocaleTimeString() }])
 
         let src = new SSE("http://localhost:8000/api/doctor", {
             headers: { "Content-Type": "application/json" },
@@ -33,13 +33,13 @@ export default function Doctor({ cfg, setLogs }: DoctorProps) {
 
         src.addEventListener("done", (r: SSEvent) => {
             const payload = JSON.parse(r.data)
-            setLogs((prevLogs) => [...prevLogs, `${payload}`])
+            setLogs((prevLogs) => [...prevLogs, { text: `${payload}`, ts: new Date().toLocaleTimeString() }])
             setIsDoctorRunning(false)
         })
 
         src.addEventListener("log", (r: SSEvent) => {
             const payload = JSON.parse(r.data)
-            setLogs((prevLogs) => [...prevLogs, `${payload}`])
+            setLogs((prevLogs) => [...prevLogs, { text: `${payload}`, ts: new Date().toLocaleTimeString() }])
         })
     }
 
