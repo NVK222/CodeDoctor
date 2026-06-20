@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const PANES = ["doctor", "engineer"] as const
 type Panes = typeof PANES[number]
@@ -27,7 +27,7 @@ export default function Logs({ doctorLogs, engineerLogs }: LogsProps) {
     }
 
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col h-96">
             <div className="flex gap-1 text-sm text-slate-300 bg-slate-800 rounded-lg">
                 {PANES.map((_pane, idx) => (
                     <button className="p-1 px-4 border-r border-slate-500 cursor-pointer" key={idx} onClick={() => setCurrentPaneName(_pane)}>{_pane.toUpperCase()}</button>
@@ -39,8 +39,19 @@ export default function Logs({ doctorLogs, engineerLogs }: LogsProps) {
 }
 
 function Pane({ logs }: PaneProps) {
+    const divRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (divRef.current) {
+            divRef.current.scrollTo({
+                top: divRef.current.scrollHeight,
+                behavior: "smooth"
+            })
+        }
+    }, [logs])
+
     return (
-        <div className="p-4 flex-1 overflow-y-auto text-sm rounded-lg shadow-xl">
+        <div ref={divRef} className="p-4 flex-1 overflow-y-auto text-sm rounded-lg shadow-xl">
             {logs.length === 0 ? (<p>No logs</p>) : (
                 logs.map((log, idx) => (
                     <div key={idx}>
