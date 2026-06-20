@@ -9,7 +9,8 @@ import Engineer from "./components/Engineer"
 function App() {
     const _root_dir = new URLSearchParams(window.location.search).get("root_dir")
     const [cfg, setCfg] = useState<Config>()
-    const [logs, setLogs] = useState<string[]>([])
+    const [doctorLogs, setDoctorLogs] = useState<string[]>([])
+    const [engineerLogs, setEngineerLogs] = useState<string[]>([])
 
     if (!_root_dir) {
         return (
@@ -61,10 +62,10 @@ function App() {
                     <h1 className="font-bold text-8xl tracking-tight">CodeDoctor</h1>
                 </header>
 
-                <Doctor cfg={cfg} setLogs={setLogs} />
-                <Engineer cfg={cfg} setLogs={setLogs} />
+                <Doctor cfg={cfg} setLogs={setDoctorLogs} />
+                <Engineer cfg={cfg} setLogs={setEngineerLogs} />
 
-                <Logs logs={logs} />
+                <Logs doctorLogs={doctorLogs} engineerLogs={engineerLogs} />
             </main >
         </div >
     )
