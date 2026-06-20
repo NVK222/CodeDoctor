@@ -16,12 +16,12 @@ export default function Sidebar({ cfg, updateConfig }: SidebarProps) {
     }
     return (
         <aside className="max-w-1/4 bg-slate-900 text-white p-2 text-xl">
-            <div>
-                <p>{decodeURIComponent(cfg.root_dir)}</p>
-            </div>
-            <hr />
             <h2 className="font-bold text-2xl py-8"> Config </h2>
             {!cfg ? <div><p>Config Not Found</p></div> : <div className="flex flex-col flex-1 text-sm gap-4">
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider" htmlFor="root_dir">Root Directory:  </label>
+                    <input className="bg-slate-800 border-slate-900 text-slate-500 cursor-not-allowed opacity-60 p-2 text-sm" id="root_dir" type="text" value={cfg.root_dir} disabled={true} />
+                </div>
                 <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider" htmlFor="search_dir">Search Directory:  </label>
                     <input className="bg-slate-700 border border-slate-800 p-2 text-sm" id="search_dir" type="text" value={cfg.search_dir} onChange={(e) => updateConfig("search_dir", e.target.value)} />
