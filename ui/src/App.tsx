@@ -3,6 +3,7 @@ import type { Config } from "./types"
 import Doctor from "./components/Doctor"
 import Sidebar from "./components/Sidebar"
 import Logs from "./components/Logs"
+import Engineer from "./components/Engineer"
 
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
                 </header>
 
                 <Doctor cfg={cfg} setLogs={setLogs} />
+                <Engineer cfg={cfg} setLogs={setLogs} />
 
                 <Logs logs={logs} />
             </main >
