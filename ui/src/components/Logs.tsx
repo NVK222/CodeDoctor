@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { allPanes, type LogEntry, type Pane } from '../types'
 
 interface LogsProps {
@@ -22,6 +22,8 @@ export default function Logs({
     onDoctorClear,
     onEngineerClear,
 }: LogsProps) {
+    const [copied, setCopied] = useState<boolean>(false)
+
     let logs: LogEntry[]
     switch (activePane) {
         case 'doctor':
@@ -45,6 +47,32 @@ export default function Logs({
             default:
                 break
         }
+    }
+
+    const handleCopyLogs = async () => {
+        switch (activePane) {
+            case 'doctor':
+                await copy(doctorLogs)
+                break
+            case 'engineer':
+                await copy(engineerLogs)
+                break
+            default:
+                break
+        }
+    }
+
+    const copy = async (logs: LogEntry[]) => {
+        if (logs.length === 0) return
+        const cleanedLogs: string = logs
+            .map((log) => `${log.ts}:${log.text}`)
+            .join('\n')
+
+        try {
+            await navigator.clipboard.writeText(cleanedLogs)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        } catch (e) {}
     }
 
     return (
@@ -88,6 +116,53 @@ export default function Logs({
                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                             />
                         </svg>
+                    </button>
+
+                    <button
+                        onClick={handleCopyLogs}
+                        disabled={logs.length === 0}
+                        title={
+                            logs.length === 0
+                                ? 'No logs to copy'
+                                : `Copy ${activePane} logs`
+                        }
+                        className={`p-1 px-2 rounded-lg text-xs font-semibold font-mono transition-all duration-150 flex items-center gap-1 ${
+                            logs.length === 0
+                                ? 'border-slate-800 bg-slate-900/40 text-slate-600 cursor-not-allowed'
+                                : copied
+                                  ? 'border-emerald-800 bg-emerald-950/30 text-emerald-400 font-bold shadow-sm cursor-pointer'
+                                  : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-200 hover:border-slate-700 cursor-pointer'
+                        }`}
+                    >
+                        {copied ? (
+                            <svg
+                                className="w-3.5 h-3.5 text-emerald-400 animate-scaleIn"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2.5"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
+                        ) : (
+                            <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                                />
+                            </svg>
+                        )}
                     </button>
                 </div>
                 <div className="flex gap-1.5 opacity-60">
