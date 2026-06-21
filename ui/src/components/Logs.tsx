@@ -1,22 +1,25 @@
-import { useEffect, useRef, useState } from 'react'
-import type { LogEntry } from '../types'
-
-const PANES = ['doctor', 'engineer'] as const
-type Panes = (typeof PANES)[number]
+import { useEffect, useRef } from 'react'
+import { allPanes, type LogEntry, type Pane } from '../types'
 
 interface LogsProps {
     doctorLogs: LogEntry[]
     engineerLogs: LogEntry[]
+    activePane: Pane
+    setActivePane: React.Dispatch<React.SetStateAction<Pane>>
 }
 
 interface PaneProps {
     logs: LogEntry[]
 }
 
-export default function Logs({ doctorLogs, engineerLogs }: LogsProps) {
-    const [currentPaneName, setCurrentPaneName] = useState<Panes>('doctor')
+export default function Logs({
+    doctorLogs,
+    engineerLogs,
+    activePane,
+    setActivePane,
+}: LogsProps) {
     let logs: LogEntry[]
-    switch (currentPaneName) {
+    switch (activePane) {
         case 'doctor':
             logs = doctorLogs
             break
@@ -31,8 +34,8 @@ export default function Logs({ doctorLogs, engineerLogs }: LogsProps) {
         <div className="flex flex-col h-96 bg-black border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
             <div className="flex justify-between items-center bg-slate-900/80 px-4 py-2 border-b border-slate-800/80 backdrop-blur-sm">
                 <div className="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800/60 text-xs text-mono">
-                    {PANES.map((_pane, idx) => {
-                        const isActive = currentPaneName === _pane
+                    {allPanes.map((_pane, idx) => {
+                        const isActive = activePane === _pane
                         return (
                             <button
                                 className={`px-4 py-1 rounded-md font-bold transition-all duration-75 cursor-pointer ${
@@ -41,7 +44,7 @@ export default function Logs({ doctorLogs, engineerLogs }: LogsProps) {
                                         : 'text-slate-500 hover:text-slate-300'
                                 }`}
                                 key={idx}
-                                onClick={() => setCurrentPaneName(_pane)}
+                                onClick={() => setActivePane(_pane)}
                             >
                                 {_pane.toUpperCase()}
                             </button>

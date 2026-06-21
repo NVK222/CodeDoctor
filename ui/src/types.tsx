@@ -13,3 +13,6 @@ export interface LogEntry {
     text: string
     ts: string
 }
+
+export const allPanes = ['doctor', 'engineer'] as const
+export type Pane = (typeof allPanes)[number]

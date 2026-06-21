@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Config, LogEntry } from './types'
+import type { Config, LogEntry, Pane } from './types'
 import Doctor from './components/Doctor'
 import Sidebar from './components/Sidebar'
 import Logs from './components/Logs'
@@ -12,6 +12,7 @@ function App() {
     const [cfg, setCfg] = useState<Config>()
     const [doctorLogs, setDoctorLogs] = useState<LogEntry[]>([])
     const [engineerLogs, setEngineerLogs] = useState<LogEntry[]>([])
+    const [activePane, setActivePane] = useState<Pane>('doctor')
 
     if (!_root_dir) {
         return (
@@ -71,11 +72,24 @@ function App() {
                 </header>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <Doctor cfg={cfg} setLogs={setDoctorLogs} />
-                    <Engineer cfg={cfg} setLogs={setEngineerLogs} />
+                    <Doctor
+                        cfg={cfg}
+                        setLogs={setDoctorLogs}
+                        onExecute={() => setActivePane('doctor')}
+                    />
+                    <Engineer
+                        cfg={cfg}
+                        setLogs={setEngineerLogs}
+                        onExecute={() => setActivePane('engineer')}
+                    />
                 </div>
 
-                <Logs doctorLogs={doctorLogs} engineerLogs={engineerLogs} />
+                <Logs
+                    doctorLogs={doctorLogs}
+                    engineerLogs={engineerLogs}
+                    activePane={activePane}
+                    setActivePane={setActivePane}
+                />
             </main>
         </div>
     )

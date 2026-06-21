@@ -6,14 +6,16 @@ import Executor from './Executor'
 interface DoctorProps {
     cfg: Config
     setLogs: React.Dispatch<React.SetStateAction<LogEntry[]>>
+    onExecute: () => void
 }
 
-export default function Doctor({ cfg, setLogs }: DoctorProps) {
+export default function Doctor({ cfg, setLogs, onExecute }: DoctorProps) {
     const [doctorPrompt, setDoctorPrompt] = useState<string>('')
     const [isDoctorRunning, setIsDoctorRunning] = useState<boolean>(false)
     const handleRunDoctor = (e: React.SubmitEvent) => {
         e.preventDefault()
         setIsDoctorRunning(true)
+        onExecute()
         setLogs((prevLogs) => [
             ...prevLogs,
             {

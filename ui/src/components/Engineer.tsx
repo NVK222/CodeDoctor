@@ -6,14 +6,16 @@ import Executor from './Executor'
 interface EngineerProps {
     cfg: Config
     setLogs: React.Dispatch<React.SetStateAction<LogEntry[]>>
+    onExecute: () => void
 }
 
-export default function Engineer({ cfg, setLogs }: EngineerProps) {
+export default function Engineer({ cfg, setLogs, onExecute }: EngineerProps) {
     const [engineerPrompt, setEngineerPrompt] = useState<string>('')
     const [isEngineerRunning, setIsEngineerRunning] = useState<boolean>(false)
     const handleRunEngineer = (e: React.SubmitEvent) => {
         e.preventDefault()
         setIsEngineerRunning(true)
+        onExecute()
         setLogs((prevLogs) => [
             ...prevLogs,
             {
