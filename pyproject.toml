@@ -12,6 +12,7 @@ dependencies = [
     "pytest>=9.0.3",
     "python-dotenv>=1.2.2",
     "sse-starlette>=3.4.4",
+    "toml>=0.10.2",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["src"]

@@ -20,7 +20,7 @@ class EngineerRequest(BaseRequest):
     user_prompt: str
 
 
-class ContextSchema(BaseModel):
+class LoadContextSchema(BaseModel):
     search_dir: str
     test_dir: str
     max_retries: int
@@ -28,3 +28,12 @@ class ContextSchema(BaseModel):
     ignore: set[str] | list[str] | str
     strong_model: str
     weak_model: str
+
+
+class SaveConfigSchema(LoadContextSchema):
+    ignore: list[str]
+
+
+class SaveConfigRequest(BaseModel):
+    root_dir: str
+    config: SaveConfigSchema

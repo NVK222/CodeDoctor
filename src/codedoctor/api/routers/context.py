@@ -1,8 +1,8 @@
 from pathlib import Path
+import toml
+from fastapi import APIRouter, HTTPException
 
-from fastapi import APIRouter
-
-from codedoctor.api.schemas import ContextSchema
+from codedoctor.api.schemas import LoadContextSchema, SaveConfigRequest
 from codedoctor.cli import (
     get_toml_data,
     prepare_exclude_dot_from_toml,
@@ -15,7 +15,7 @@ context_router = APIRouter()
 
 
 @context_router.get("/api/context")
-def get_context(root_dir: str) -> ContextSchema:
+def get_context(root_dir: str) -> LoadContextSchema:
     path_to_toml = Path(root_dir) / "pyproject.toml"
     toml_data = get_toml_data(path_to_toml)
     ignore_set = prepare_ignore_set_from_toml(toml_data)
@@ -38,7 +38,7 @@ def get_context(root_dir: str) -> ContextSchema:
         exclude_dot,
     )
 
-    return ContextSchema(
+    return LoadContextSchema(
         search_dir=str(cfg.search_dir),
         test_dir=str(cfg.test_dir),
         strong_model=cfg.strong_model_name,
@@ -47,3 +47,31 @@ def get_context(root_dir: str) -> ContextSchema:
         ignore=cfg.ignore_list,
         include_dot=not cfg.exclude_dot,
     )
+
+
+@context_router.post("/api/context")
+def save_config(payload: SaveConfigRequest):
+    root_dir = Path(payload.root_dir)
+    toml_path = root_dir / "pyproject.toml"
+
+    if not toml_path.exists():
+        raise HTTPException(404, f"pyproject.toml not found at {toml_path}")
+
+    try:
+        with open(toml_path, "r") as fp:
+            full_toml = toml.load(fp)
+
+        if "tool" not in full_toml:
+            full_toml["tool"] = {}
+
+        full_toml["tool"]["codedoctor"] = payload.config.model_dump()
+
+        with open(toml_path, "w") as fp:
+            toml.dump(full_toml, fp)
+
+        return {
+            "status": "success",
+            "message": "Config successfully saved to pyproject.toml",
+        }
+    except Exception as e:
+        raise HTTPException(500, f"Failed to write config: {str(e)}")
