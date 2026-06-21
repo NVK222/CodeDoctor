@@ -12,6 +12,37 @@ interface SidebarProps {
 
 export default function Sidebar({ cfg, updateConfig }: SidebarProps) {
     const [ignoreText, setIgnoreText] = useState<string>(cfg.ignore.join(', '))
+    const [isSaving, setIsSaving] = useState<boolean>(false)
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>(
+        'idle'
+    )
+
+    const handleSave = async () => {
+        setIsSaving(true)
+        setSaveStatus('idle')
+
+        const { root_dir, ...configWithoutRootDir } = cfg
+        try {
+            const res = await fetch('http://localhost:8000/api/context', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    root_dir: root_dir,
+                    config: configWithoutRootDir,
+                }),
+            })
+
+            if (res.ok) {
+                setSaveStatus('success')
+                setTimeout(() => setSaveStatus('idle'), 2500)
+            } else setSaveStatus('error')
+        } catch (e) {
+            setSaveStatus('error')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     const handleOnBlur = (e: React.FocusEvent<HTMLInputElement, Element>) => {
         const newIgnore = e.target.value
             .split(',')
@@ -177,6 +208,28 @@ export default function Sidebar({ cfg, updateConfig }: SidebarProps) {
                         onChange={(e) => setIgnoreText(e.target.value)}
                         onBlur={handleOnBlur}
                     />
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-slate-800/60">
+                    <button
+                        disabled={isSaving}
+                        onClick={handleSave}
+                        className={`w-full text-xs font-mono font-bold py-2 px-4 rounded-lg border transition-all duration-200 cursor-pointer ${
+                            saveStatus === 'success'
+                                ? 'bg-emerald-950/40 border-emerald-800 text-emerald-400'
+                                : saveStatus === 'error'
+                                  ? 'bg-rose-950/40 border-rose-800 text-rose-400'
+                                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                        }`}
+                    >
+                        {isSaving
+                            ? 'SAVING...'
+                            : saveStatus === 'success'
+                              ? 'SAVED'
+                              : saveStatus === 'error'
+                                ? 'FAILED'
+                                : 'SAVE'}
+                    </button>
                 </div>
             </div>
         </aside>
