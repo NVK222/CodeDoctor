@@ -1,6 +1,7 @@
 from pathlib import Path
-import toml
+import tomlkit
 from fastapi import APIRouter, HTTPException
+from tomlkit import toml_document
 
 from codedoctor.api.schemas import LoadContextSchema, SaveConfigRequest
 from codedoctor.cli import (
@@ -59,15 +60,26 @@ def save_config(payload: SaveConfigRequest):
 
     try:
         with open(toml_path, "r") as fp:
-            full_toml = toml.load(fp)
+            full_toml = tomlkit.load(fp)
 
         if "tool" not in full_toml:
-            full_toml["tool"] = {}
+            full_toml["tool"] = tomlkit.table()
 
-        full_toml["tool"]["codedoctor"] = payload.config.model_dump()
+        config = payload.config.model_dump()
+
+        if "codedoctor" not in full_toml["tool"]:
+            full_toml["tool"]["codedoctor"] = tomlkit.table()
+
+        for key, value in config.items():
+            if isinstance(value, list):
+                a = tomlkit.array()
+                a.extend(value)
+                full_toml["tool"]["codedoctor"][key] = a
+            else:
+                full_toml["tool"]["codedoctor"][key] = value
 
         with open(toml_path, "w") as fp:
-            toml.dump(full_toml, fp)
+            fp.write(full_toml.as_string())
 
         return {
             "status": "success",
