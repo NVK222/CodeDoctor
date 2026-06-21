@@ -1,24 +1,29 @@
-
-import { useState } from "react"
-import type { Config, LogEntry } from "../types"
-import { SSE, type SSEvent } from "sse.js"
-import Executor from "./Executor"
+import { useState } from 'react'
+import type { Config, LogEntry } from '../types'
+import { SSE, type SSEvent } from 'sse.js'
+import Executor from './Executor'
 
 interface EngineerProps {
-    cfg: Config,
+    cfg: Config
     setLogs: React.Dispatch<React.SetStateAction<LogEntry[]>>
 }
 
 export default function Engineer({ cfg, setLogs }: EngineerProps) {
-    const [engineerPrompt, setEngineerPrompt] = useState<string>("")
+    const [engineerPrompt, setEngineerPrompt] = useState<string>('')
     const [isEngineerRunning, setIsEngineerRunning] = useState<boolean>(false)
     const handleRunEngineer = (e: React.SubmitEvent) => {
         e.preventDefault()
         setIsEngineerRunning(true)
-        setLogs((prevLogs) => [...prevLogs, { text: "Connecting to API...", ts: new Date().toLocaleTimeString() }])
+        setLogs((prevLogs) => [
+            ...prevLogs,
+            {
+                text: 'Connecting to API...',
+                ts: new Date().toLocaleTimeString(),
+            },
+        ])
 
-        let src = new SSE("http://localhost:8000/api/engineer", {
-            headers: { "Content-Type": "application/json" },
+        let src = new SSE('http://localhost:8000/api/engineer', {
+            headers: { 'Content-Type': 'application/json' },
             payload: JSON.stringify({
                 user_prompt: engineerPrompt,
                 root_dir: cfg.root_dir,
@@ -28,23 +33,36 @@ export default function Engineer({ cfg, setLogs }: EngineerProps) {
                 weak_model: cfg.weak_model,
                 max_retries: cfg.max_retries,
                 ignore: cfg.ignore,
-                include_dot: cfg.include_dot
+                include_dot: cfg.include_dot,
             }),
         })
 
-        src.addEventListener("done", (r: SSEvent) => {
+        src.addEventListener('done', (r: SSEvent) => {
             const payload = JSON.parse(r.data)
-            setLogs((prevLogs) => [...prevLogs, { text: `${payload}`, ts: new Date().toLocaleTimeString() }])
+            setLogs((prevLogs) => [
+                ...prevLogs,
+                { text: `${payload}`, ts: new Date().toLocaleTimeString() },
+            ])
             setIsEngineerRunning(false)
         })
 
-        src.addEventListener("log", (r: SSEvent) => {
+        src.addEventListener('log', (r: SSEvent) => {
             const payload = JSON.parse(r.data)
-            setLogs((prevLogs) => [...prevLogs, { text: `${payload}`, ts: new Date().toLocaleTimeString() }])
+            setLogs((prevLogs) => [
+                ...prevLogs,
+                { text: `${payload}`, ts: new Date().toLocaleTimeString() },
+            ])
         })
     }
 
     return (
-        <Executor name="Engineer" prompt={engineerPrompt} isPromptRequired={true} isRunning={isEngineerRunning} onSubmitHandler={handleRunEngineer} setPrompt={setEngineerPrompt} />
+        <Executor
+            name="Engineer"
+            prompt={engineerPrompt}
+            isPromptRequired={true}
+            isRunning={isEngineerRunning}
+            onSubmitHandler={handleRunEngineer}
+            setPrompt={setEngineerPrompt}
+        />
     )
 }

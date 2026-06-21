@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.1",
+    "prettier": "^3.8.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "sse.js": "^2.8.0",
