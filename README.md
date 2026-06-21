@@ -1,5 +1,3 @@
-> # NOTE: This is currently WIP 
-  
 # CodeDoctor  
 CodeDoctor is a CLI tool that helps with testing your code. The Engineer helps create tests, and if something is wrong, the Doctor can help you fix them.
 Currently only supports gemini models.  
@@ -13,6 +11,7 @@ Expect a couple of bugs.
 3. Create a .env file with ```GOOGLE_API_KEY=<YOUR API KEY>```.
 4. Run ```uv run doctor``` with arguments to fix your failing tests.
 5. Run ```uv run engineer``` with arguments to create new tests.
+6. Run ```uv run gui``` with the root directory as argument to open a web gui.
 # Options
 ```
 usage: CodeDoctor [-h] [-s dir] [-t dir] [-sm model] [-wm model] [-r retries] [-ig list] [-id] root_dir prompt
@@ -100,3 +99,35 @@ Use `uv run fastapi dev` to start the FastAPI backend.
   ```
   If config options are supplied in the POST requests they will be used, else the options in `pyproject.toml` if they exist. If not the default options.
   For the ignore list, it will be merged with the ignore defined in the `pyproject.toml` like the CLI.
+  
+* POST `http://localhost:8000/api/context?root_dir=path/to/root/dir` to save the current config at the root dir pyproject.toml.
+  > Example using curl
+  ```
+   curl -X 'POST' \
+  'http://localhost:8000/api/context' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "root_dir": "string",
+  "config": {
+    "search_dir": "string",
+    "test_dir": "string",
+    "max_retries": 0,
+    "include_dot": true,
+    "ignore": [
+      "string"
+    ],
+    "strong_model": "string",
+    "weak_model": "string"
+  }
+  }'
+  ```
+* GET `http://localhost:8000/api/health` to check status
+  > Example using curl
+  ```
+  curl -X 'GET' \
+  'http://localhost:8000/api/health' \
+  -H 'accept: application/json'
+  ```
+# GUI Preview
+  <img width="1786" height="1008" alt="image" src="https://github.com/user-attachments/assets/4e093f11-52f3-49d3-a5ff-dd9d4063dfb1" />
