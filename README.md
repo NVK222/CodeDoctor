@@ -1,7 +1,9 @@
 # CodeDoctor  
 CodeDoctor is a CLI tool that helps with testing your code. The Engineer helps create tests, and if something is wrong, the Doctor can help you fix them.
 Currently only supports gemini models.  
-Expect a couple of bugs.  
+# GUI Preview  
+  <img width="1786" height="1008" alt="image" src="https://github.com/user-attachments/assets/4e093f11-52f3-49d3-a5ff-dd9d4063dfb1" />  
+
 # Requirements
 #### 1. uv
 #### 2. A Gemini api key
@@ -129,5 +131,3 @@ Use `uv run fastapi dev` to start the FastAPI backend.
   'http://localhost:8000/api/health' \
   -H 'accept: application/json'
   ```
-# GUI Preview
-  <img width="1786" height="1008" alt="image" src="https://github.com/user-attachments/assets/4e093f11-52f3-49d3-a5ff-dd9d4063dfb1" />
