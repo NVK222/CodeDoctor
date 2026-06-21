@@ -15,6 +15,13 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok"}
+
+
 app.include_router(doctor_router)
 app.include_router(engineer_router)
 app.include_router(context_router)
