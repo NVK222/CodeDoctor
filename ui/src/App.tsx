@@ -55,6 +55,14 @@ function App() {
         })
     }
 
+    const clearDoctorLogs = () => {
+        setDoctorLogs([])
+    }
+
+    const clearEngineerLogs = () => {
+        setEngineerLogs([])
+    }
+
     return (
         <div className="flex bg-slate-950 min-h-screen text-slate-300 selection:bg-slate-800/80">
             <Sidebar cfg={cfg} updateConfig={updateConfig} />
@@ -89,6 +97,8 @@ function App() {
                     engineerLogs={engineerLogs}
                     activePane={activePane}
                     setActivePane={setActivePane}
+                    onDoctorClear={clearDoctorLogs}
+                    onEngineerClear={clearEngineerLogs}
                 />
             </main>
         </div>
