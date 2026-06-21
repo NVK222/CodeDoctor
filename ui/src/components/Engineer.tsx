@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Config, LogEntry } from '../types'
 import { SSE, type SSEvent } from 'sse.js'
 import Executor from './Executor'
@@ -12,8 +12,10 @@ interface EngineerProps {
 export default function Engineer({ cfg, setLogs, onExecute }: EngineerProps) {
     const [engineerPrompt, setEngineerPrompt] = useState<string>('')
     const [isEngineerRunning, setIsEngineerRunning] = useState<boolean>(false)
+    const sseRef = useRef<SSE | null>(null)
     const handleRunEngineer = (e: React.SubmitEvent) => {
         e.preventDefault()
+        if (isEngineerRunning) return
         setIsEngineerRunning(true)
         onExecute()
         setLogs((prevLogs) => [
@@ -39,6 +41,8 @@ export default function Engineer({ cfg, setLogs, onExecute }: EngineerProps) {
             }),
         })
 
+        sseRef.current = src
+
         src.addEventListener('done', (r: SSEvent) => {
             const payload = JSON.parse(r.data)
             setLogs((prevLogs) => [
@@ -55,6 +59,33 @@ export default function Engineer({ cfg, setLogs, onExecute }: EngineerProps) {
                 { text: `${payload}`, ts: new Date().toLocaleTimeString() },
             ])
         })
+
+        src.addEventListener('error', () => {
+            src.close()
+            setIsEngineerRunning(false)
+        })
+
+        src.addEventListener('abort', () => {
+            setIsEngineerRunning(false)
+        })
+    }
+
+    const handleForceStopEngineer = (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        if (sseRef.current) {
+            sseRef.current.close()
+            sseRef.current = null
+        }
+        setIsEngineerRunning(false)
+        setLogs((prevLogs) => [
+            ...prevLogs,
+            {
+                text: 'The task was aborted',
+                ts: new Date().toLocaleTimeString(),
+            },
+        ])
     }
 
     return (
@@ -65,6 +96,7 @@ export default function Engineer({ cfg, setLogs, onExecute }: EngineerProps) {
             isRunning={isEngineerRunning}
             onSubmitHandler={handleRunEngineer}
             setPrompt={setEngineerPrompt}
+            handleForceStopAgent={handleForceStopEngineer}
         />
     )
 }

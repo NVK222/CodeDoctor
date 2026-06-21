@@ -7,6 +7,7 @@ interface ExecutorProps {
     setPrompt: React.Dispatch<React.SetStateAction<string>>
     isRunning: boolean
     isPromptRequired: boolean
+    handleForceStopAgent: (e: React.MouseEvent) => void
 }
 
 export default function Executor({
@@ -16,6 +17,7 @@ export default function Executor({
     setPrompt,
     isRunning,
     isPromptRequired,
+    handleForceStopAgent,
 }: ExecutorProps) {
     return (
         <div className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 flex flex-col shadow-lg">
@@ -46,13 +48,28 @@ export default function Executor({
                     />
                 </div>
 
-                <button
-                    type="submit"
-                    disabled={isRunning}
-                    className={`w-full py-2.5 rounded-lg text-xs font-bold shadow-md transition-all duration-75 tracking-wider uppercase cursor-pointer ${isRunning ? 'bg-slate-800 text-slate-500 cursor-not-allowed animate-pulse border border-slate-700/30' : 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors duration-200'}`}
-                >
-                    {isRunning ? 'Running...' : 'Execute'}
-                </button>
+                {!isRunning ? (
+                    <button
+                        key="execute-submit-btn"
+                        type="submit"
+                        className="w-full py-2.5 rounded-lg text-xs font-bold shadow-md tracking-wider uppercase cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white transition-colors duration-200"
+                    >
+                        Execute
+                    </button>
+                ) : (
+                    <button
+                        key="stop-abort-btn"
+                        type="button"
+                        onClick={handleForceStopAgent}
+                        className="w-full py-2.5 rounded-lg text-xs font-bold shadow-md tracking-wider uppercase cursor-pointer bg-rose-600 hover:bg-rose-500 text-white transition-colors duration-200 flex items-center justify-center gap-2 border border-rose-500/20"
+                    >
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-300 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-100"></span>
+                        </span>
+                        Stop Execution
+                    </button>
+                )}
             </form>
         </div>
     )

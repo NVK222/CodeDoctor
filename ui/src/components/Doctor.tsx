@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Config, LogEntry } from '../types'
 import { SSE, type SSEvent } from 'sse.js'
 import Executor from './Executor'
@@ -12,8 +12,10 @@ interface DoctorProps {
 export default function Doctor({ cfg, setLogs, onExecute }: DoctorProps) {
     const [doctorPrompt, setDoctorPrompt] = useState<string>('')
     const [isDoctorRunning, setIsDoctorRunning] = useState<boolean>(false)
+    const sseRef = useRef<SSE | null>(null)
     const handleRunDoctor = (e: React.SubmitEvent) => {
         e.preventDefault()
+        if (isDoctorRunning) return
         setIsDoctorRunning(true)
         onExecute()
         setLogs((prevLogs) => [
@@ -39,12 +41,15 @@ export default function Doctor({ cfg, setLogs, onExecute }: DoctorProps) {
             }),
         })
 
+        sseRef.current = src
+
         src.addEventListener('done', (r: SSEvent) => {
             const payload = JSON.parse(r.data)
             setLogs((prevLogs) => [
                 ...prevLogs,
                 { text: `${payload}`, ts: new Date().toLocaleTimeString() },
             ])
+            src.close()
             setIsDoctorRunning(false)
         })
 
@@ -55,6 +60,31 @@ export default function Doctor({ cfg, setLogs, onExecute }: DoctorProps) {
                 { text: `${payload}`, ts: new Date().toLocaleTimeString() },
             ])
         })
+
+        src.addEventListener('error', () => {
+            src.close()
+            setIsDoctorRunning(false)
+        })
+        src.addEventListener('abort', () => {
+            setIsDoctorRunning(false)
+        })
+    }
+
+    const handleForceStopDoctor = (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (sseRef.current) {
+            sseRef.current.close()
+            sseRef.current = null
+        }
+        setIsDoctorRunning(false)
+        setLogs((prevLogs) => [
+            ...prevLogs,
+            {
+                text: 'The task was aborted.',
+                ts: new Date().toLocaleTimeString(),
+            },
+        ])
     }
 
     return (
@@ -65,6 +95,7 @@ export default function Doctor({ cfg, setLogs, onExecute }: DoctorProps) {
             isRunning={isDoctorRunning}
             onSubmitHandler={handleRunDoctor}
             setPrompt={setDoctorPrompt}
+            handleForceStopAgent={handleForceStopDoctor}
         />
     )
 }
