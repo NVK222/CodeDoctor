@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react"
-import type { Config, LogEntry } from "./types"
-import Doctor from "./components/Doctor"
-import Sidebar from "./components/Sidebar"
-import Logs from "./components/Logs"
-import Engineer from "./components/Engineer"
-
+import { useEffect, useState } from 'react'
+import type { Config, LogEntry } from './types'
+import Doctor from './components/Doctor'
+import Sidebar from './components/Sidebar'
+import Logs from './components/Logs'
+import Engineer from './components/Engineer'
 
 function App() {
-    const _root_dir = new URLSearchParams(window.location.search).get("root_dir")
+    const _root_dir = new URLSearchParams(window.location.search).get(
+        'root_dir'
+    )
     const [cfg, setCfg] = useState<Config>()
     const [doctorLogs, setDoctorLogs] = useState<LogEntry[]>([])
     const [engineerLogs, setEngineerLogs] = useState<LogEntry[]>([])
@@ -15,9 +16,7 @@ function App() {
     if (!_root_dir) {
         return (
             <div>
-                <p>
-                    The root directory not found.
-                </p>
+                <p>The root directory not found.</p>
             </div>
         )
     }
@@ -39,35 +38,46 @@ function App() {
     if (!cfg) {
         return (
             <div>
-                <p>
-                    Error parsing config
-                </p>
+                <p>Error parsing config</p>
             </div>
         )
     }
 
-    const updateConfig = <K extends keyof Config>(key: K, value: Config[K], config: Config = cfg) => {
-        setCfg(prevConfig => {
+    const updateConfig = <K extends keyof Config>(
+        key: K,
+        value: Config[K],
+        config: Config = cfg
+    ) => {
+        setCfg((prevConfig) => {
             if (!prevConfig) return prevConfig
             return { ...config, [key]: value }
         })
     }
 
     return (
-        <div className="flex bg-slate-700 min-h-screen text-slate-300">
+        <div className="flex bg-slate-950 min-h-screen text-slate-300 selection:bg-slate-800/80">
             <Sidebar cfg={cfg} updateConfig={updateConfig} />
 
-            <main className="flex flex-1 flex-col p-8 gap-6 max-w-5xl mx-auto w-full">
-                <header className="flex justify-between items-center border-b border-slate-800 pb-4">
-                    <h1 className="font-bold text-4xl tracking-tight">CodeDoctor</h1>
+            <main className="flex flex-1 flex-col p-8 gap-6 max-w-5xl w-full">
+                <header className="flex justify-between items-center border-b border-slate-900 pb-4">
+                    <div>
+                        <h1 className="font-extrabold text-2xl tracking-tight text-white">
+                            CodeDoctor
+                        </h1>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                            Automated codebase diagnostics
+                        </p>
+                    </div>
                 </header>
 
-                <Doctor cfg={cfg} setLogs={setDoctorLogs} />
-                <Engineer cfg={cfg} setLogs={setEngineerLogs} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <Doctor cfg={cfg} setLogs={setDoctorLogs} />
+                    <Engineer cfg={cfg} setLogs={setEngineerLogs} />
+                </div>
 
                 <Logs doctorLogs={doctorLogs} engineerLogs={engineerLogs} />
-            </main >
-        </div >
+            </main>
+        </div>
     )
 }
 
