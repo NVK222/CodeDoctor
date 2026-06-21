@@ -21,14 +21,14 @@ def prepare_graph_input(pre_test_result: str, user_prompt: str, cfg: Config):
     return {"messages": messages, "cfg": cfg, "retry_count": 0}
 
 
-def run_graph(
+async def run_graph(
     graph: CompiledStateGraph[DoctorState, None, DoctorState, DoctorState],
     graph_input: dict[str, list[HumanMessage] | Config | int],
     cfg: Config,
 ):
     cfg.notify(f"Running CodeDoctor on the directory:  {cfg.search_dir}\n")
 
-    for chunk in graph.stream(graph_input, stream_mode="updates", version="v2"):
+    async for chunk in graph.astream(graph_input, stream_mode="updates", version="v2"):
         if chunk["type"] == "updates":
             for node_name, state in chunk["data"].items():
                 if node_name == "node_doctor":
@@ -71,8 +71,8 @@ def run_graph(
                         cfg.notify("")
 
 
-def should_run_graph(cfg: Config) -> tuple[bool, str]:
-    pre_test_result = run_tests(cfg.test_dir)
+async def should_run_graph(cfg: Config) -> tuple[bool, str]:
+    pre_test_result = await run_tests(cfg.test_dir)
     if is_test_successful(pre_test_result):
         cfg.notify("All tests are passing. Exiting")
         return (False, "")
@@ -85,16 +85,16 @@ def create_graph(cfg: Config):
     tools_doctor = [list_all_files, open_file, edit_file]
     model_doctor_with_tools = model_doctor.bind_tools(tools_doctor)
 
-    def node_doctor(state: DoctorState):
-        response = model_doctor_with_tools.invoke(
+    async def node_doctor(state: DoctorState):
+        response = await model_doctor_with_tools.ainvoke(
             ([SystemMessage(content=prompt)] + state.get("messages"))
         )
         return {"messages": response}
 
     node_tool = ToolNode(tools_doctor, handle_tool_errors=True)
 
-    def node_test(state: DoctorState):
-        test_result = run_tests(cfg.test_dir)
+    async def node_test(state: DoctorState):
+        test_result = await run_tests(cfg.test_dir)
         if is_test_successful(test_result):
             ctx = "All tests passed successfully! Do not call any more tools. You are completely done. Provide your final text summary now."
             return {"messages": [HumanMessage(content=ctx)]}

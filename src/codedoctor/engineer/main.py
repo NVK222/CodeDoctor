@@ -24,16 +24,16 @@ def create_graph(cfg: Config):
     tools_engineer = [create_test, list_tests, list_src, edit_test, open_src]
     model_engineer_with_tools = model_engineer.bind_tools(tools_engineer)
 
-    def node_engineer(state: EngineerState):
-        response = model_engineer_with_tools.invoke(
+    async def node_engineer(state: EngineerState):
+        response = await model_engineer_with_tools.ainvoke(
             ([SystemMessage(content=prompt_engineer)]) + state.get("messages")
         )
         return {"messages": response}
 
     node_tool = ToolNode(tools_engineer, handle_tool_errors=True)
 
-    def node_test(state: EngineerState):
-        test_result = run_tests(cfg.test_dir)
+    async def node_test(state: EngineerState):
+        test_result = await run_tests(cfg.test_dir)
         if not is_test_successful(test_result, ["EXIT_CODE:0"]):
             ctx = f"There are some issues in the test code. Here is the test output: {test_result}"
             return {"messages": [HumanMessage(content=ctx)]}
@@ -45,13 +45,13 @@ def create_graph(cfg: Config):
             return "node_tool"
         return "node_test"
 
-    def check_should_continue(state: EngineerState):
+    async def check_should_continue(state: EngineerState):
         last_msg: HumanMessage = state.get("messages")[-1].text
         if is_test_successful(last_msg, ["EXIT_CODE:0"]):
             return END
         if state.get("retry_count") >= state.get("cfg").max_retries:
             return END
-        response = model_auditor.invoke(
+        response = await model_auditor.ainvoke(
             ([SystemMessage(content=prompt_auditor)] + [last_msg])
         )
 
@@ -78,7 +78,7 @@ def create_graph(cfg: Config):
     return graph
 
 
-def run_graph(
+async def run_graph(
     graph: CompiledStateGraph[EngineerState, None, EngineerState, EngineerState],
     user_prompt: str,
     cfg: Config,
@@ -87,7 +87,7 @@ def run_graph(
 
     messages = [HumanMessage(content=user_prompt)]
     graph_input = {"messages": messages, "cfg": cfg, "retry_count": 0}
-    for chunk in graph.stream(
+    async for chunk in graph.astream(
         graph_input,
         stream_mode="updates",
         version="v2",

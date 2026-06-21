@@ -1,5 +1,6 @@
+from asyncio import create_subprocess_exec
+import asyncio
 from pathlib import Path
-import subprocess
 from datetime import datetime
 from codedoctor.config import Config
 
@@ -15,11 +16,19 @@ def is_test_successful(
     return False
 
 
-def run_tests(test_dir: Path) -> str:
-    result = subprocess.run(
-        ["pytest", "-v", "--no-header", str(test_dir)], capture_output=True, text=True
+async def run_tests(test_dir: Path) -> str:
+    process = await create_subprocess_exec(
+        "pytest",
+        "-v",
+        "--no-header",
+        str(test_dir),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
-    output = f"STDOUT:\n{result.stdout}\nSTDERR:\n:{result.stderr}\nEXIT_CODE:{result.returncode}"
+    out, err = await process.communicate()
+    stdout = out.decode("utf-8", errors="ignore") if out else ""
+    stderr = err.decode("utf-8", errors="ignore") if err else ""
+    output = f"STDOUT:\n{stdout}\nSTDERR:\n:{stderr}\nEXIT_CODE:{process.returncode}"
     return output
 
 

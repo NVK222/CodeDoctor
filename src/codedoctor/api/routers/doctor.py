@@ -1,4 +1,4 @@
-from asyncio import Queue, create_task, to_thread, wait_for
+from asyncio import CancelledError, Queue, create_task, wait_for
 from collections.abc import AsyncIterable
 from pathlib import Path
 from fastapi import APIRouter
@@ -59,7 +59,7 @@ async def post_doctor(req: DoctorRequest) -> AsyncIterable[ServerSentEvent]:
         exclude_dot,
     )
 
-    should_continue, pre_test_result = should_run_graph(cfg)
+    should_continue, pre_test_result = await should_run_graph(cfg)
     if not should_continue:
         yield ServerSentEvent(data="All tests passing. Exiting.", event="done")
         return
@@ -73,7 +73,7 @@ async def post_doctor(req: DoctorRequest) -> AsyncIterable[ServerSentEvent]:
 
     graph = create_graph(cfg)
     graph_inputs = prepare_graph_input(pre_test_result, user_prompt, cfg)
-    graph_task = create_task(to_thread(run_graph, graph, graph_inputs, cfg))
+    graph_task = create_task(run_graph(graph, graph_inputs, cfg))
 
     try:
         while not graph_task.done() or not q.empty():
@@ -85,5 +85,9 @@ async def post_doctor(req: DoctorRequest) -> AsyncIterable[ServerSentEvent]:
                 continue
         await graph_task
         yield ServerSentEvent(event="done", data="Task has been completed")
+    except CancelledError:
+        print("Client disconnected")
+        graph_task.cancel()
+        raise
     except Exception as e:
         yield ServerSentEvent(event="error", data=f"Exception :  {str(e)}")

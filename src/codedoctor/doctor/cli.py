@@ -1,3 +1,4 @@
+from asyncio import run
 import sys
 from codedoctor.cli import initialize_config
 from codedoctor.doctor.main import (
@@ -19,7 +20,7 @@ def main():
 
     graph = create_graph(cfg)
     graph_input = prepare_graph_input(pre_test_result, user_prompt, cfg)
-    run_graph(graph, graph_input, cfg)
+    run(run_graph(graph, graph_input, cfg))
 
 
 if __name__ == "__main__":
