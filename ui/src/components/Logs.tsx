@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { allPanes, type LogEntry, type Pane } from '../types'
+import { allPanes, type LogEntry, type Pane as PaneType } from '../types'
 
 interface LogsProps {
     doctorLogs: LogEntry[]
     engineerLogs: LogEntry[]
-    activePane: Pane
-    setActivePane: React.Dispatch<React.SetStateAction<Pane>>
+    activePane: PaneType
+    setActivePane: React.Dispatch<React.SetStateAction<PaneType>>
     onDoctorClear: () => void
     onEngineerClear: () => void
 }
