@@ -49,6 +49,7 @@ export default function Engineer({ cfg, setLogs, onExecute }: EngineerProps) {
                 ...prevLogs,
                 { text: `${payload}`, ts: new Date().toLocaleTimeString() },
             ])
+            src.close()
             setIsEngineerRunning(false)
         })
 
