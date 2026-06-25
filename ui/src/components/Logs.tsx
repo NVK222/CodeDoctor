@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { allPanes, type LogEntry, type Pane as PaneType } from '../types'
+import Markdown from 'react-markdown'
 
 interface LogsProps {
     doctorLogs: LogEntry[]
@@ -205,9 +206,88 @@ function Pane({ logs }: PaneProps) {
                             {log.ts}
                         </span>
                         <span> </span>
-                        <span className="text-slate-500 whitespace-pre-wrap leading-relaxed">
-                            {log.text}
-                        </span>
+                        <div className="text-slate-300 leading-relaxed font-sans flex-1 overflow-hidden min-w-0">
+                            <Markdown
+                                components={{
+                                    p: ({ ...props }) => (
+                                        <p
+                                            className="mb-2 last:mb-0 whitespace-pre-wrap"
+                                            {...props}
+                                        />
+                                    ),
+                                    a: ({ ...props }) => (
+                                        <a
+                                            className="text-emerald-400 hover:underline font-semibold"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            {...props}
+                                        />
+                                    ),
+                                    ul: ({ ...props }) => (
+                                        <ul
+                                            className="list-disc pl-5 mb-2 space-y-1"
+                                            {...props}
+                                        />
+                                    ),
+                                    ol: ({ ...props }) => (
+                                        <ol
+                                            className="list-decimal pl-5 mb-2 space-y-1"
+                                            {...props}
+                                        />
+                                    ),
+                                    li: ({ ...props }) => (
+                                        <li
+                                            className="text-slate-300"
+                                            {...props}
+                                        />
+                                    ),
+                                    h1: ({ ...props }) => (
+                                        <h1
+                                            className="text-lg font-bold text-slate-100 mt-3 mb-1.5 font-mono"
+                                            {...props}
+                                        />
+                                    ),
+                                    h2: ({ ...props }) => (
+                                        <h2
+                                            className="text-base font-bold text-slate-200 mt-2.5 mb-1 font-mono"
+                                            {...props}
+                                        />
+                                    ),
+                                    h3: ({ ...props }) => (
+                                        <h3
+                                            className="text-sm font-bold text-slate-300 mt-2 mb-1 font-mono"
+                                            {...props}
+                                        />
+                                    ),
+                                    code: ({
+                                        className,
+                                        children,
+                                        ...props
+                                    }) => {
+                                        const isInline = !className
+                                        return isInline ? (
+                                            <code
+                                                className="bg-slate-900 px-1.5 py-0.5 rounded text-rose-400 font-mono text-xs border border-slate-800/40"
+                                                {...props}
+                                            >
+                                                {children}
+                                            </code>
+                                        ) : (
+                                            <pre className="bg-slate-900/60 p-3 rounded-lg overflow-x-auto my-2 border border-slate-800 font-mono text-xs text-slate-200 leading-normal">
+                                                <code
+                                                    className={className}
+                                                    {...props}
+                                                >
+                                                    {children}
+                                                </code>
+                                            </pre>
+                                        )
+                                    },
+                                }}
+                            >
+                                {log.text}
+                            </Markdown>
+                        </div>
                     </div>
                 ))
             )}
