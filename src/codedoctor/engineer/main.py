@@ -99,7 +99,7 @@ async def run_graph(
                     tool_call = state.get("messages").tool_calls
 
                     if m:
-                        cfg.notify(f"\n[ENGINEER] :  {m[0].get('text')}")
+                        cfg.notify(f"\n{m[0].get('text')}")
 
                     if tool_call:
                         tool = tool_call[0]
