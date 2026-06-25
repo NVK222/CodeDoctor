@@ -17,9 +17,7 @@ TERMINATION CONSTRAINT:
 The moment the test files are created and contain valid testing logic, you must IMMEDIATELY STOP using tools and provide a conversational summary of the changes you made.
 """
 
-prompt_auditor = (
-    AUDITOR_PROMPT
-) = """You are a Quality Auditor inspecting a failing test suite run.
+prompt_auditor = """You are a Quality Auditor inspecting a failing test suite run.
 Your sole task is to look at the test output and determine where the failure originated.
 
 Analyze the traceback and decide between exactly TWO options:
