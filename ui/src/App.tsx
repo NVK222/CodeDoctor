@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar'
 import Logs from './components/Logs'
 import Engineer from './components/Engineer'
 import Header from './components/Header'
+import Error from './components/Error'
 
 function App() {
     const _root_dir = new URLSearchParams(window.location.search).get(
@@ -18,9 +19,11 @@ function App() {
 
     if (!_root_dir) {
         return (
-            <div>
-                <p>The root directory not found.</p>
-            </div>
+            <Error
+                title="Root directory Missing"
+                description="CodeDoctor requires a root_dir query parameter to index repository files"
+                hint="uv run gui /path/to/root"
+            />
         )
     }
 
