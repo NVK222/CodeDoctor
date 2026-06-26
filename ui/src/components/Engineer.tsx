@@ -26,7 +26,7 @@ export default function Engineer({ cfg, setLogs, onExecute }: EngineerProps) {
             },
         ])
 
-        let src = new SSE('http://localhost:8000/api/engineer', {
+        const src = new SSE('http://localhost:8000/api/engineer', {
             headers: { 'Content-Type': 'application/json' },
             payload: JSON.stringify({
                 user_prompt: engineerPrompt,

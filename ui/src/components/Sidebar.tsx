@@ -38,7 +38,7 @@ export default function Sidebar({ cfg, updateConfig }: SidebarProps) {
                 setSaveStatus('success')
                 setTimeout(() => setSaveStatus('idle'), 2500)
             } else setSaveStatus('error')
-        } catch (e) {
+        } catch {
             setSaveStatus('error')
         } finally {
             setIsSaving(false)

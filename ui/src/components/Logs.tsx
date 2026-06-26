@@ -73,7 +73,9 @@ export default function Logs({
             await navigator.clipboard.writeText(cleanedLogs)
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
-        } catch (e) {}
+        } catch {
+            setCopied(false)
+        }
     }
 
     return (

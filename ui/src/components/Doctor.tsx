@@ -26,7 +26,7 @@ export default function Doctor({ cfg, setLogs, onExecute }: DoctorProps) {
             },
         ])
 
-        let src = new SSE('http://localhost:8000/api/doctor', {
+        const src = new SSE('http://localhost:8000/api/doctor', {
             headers: { 'Content-Type': 'application/json' },
             payload: JSON.stringify({
                 user_prompt: doctorPrompt,

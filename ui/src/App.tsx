@@ -24,7 +24,7 @@ function App() {
                 const response = await fetch('http://localhost:8000/api/health')
                 if (response.ok) setIsOnline(true)
                 else setIsOnline(false)
-            } catch (error: unknown) {
+            } catch {
                 setIsOnline(false)
             }
         }
@@ -48,7 +48,7 @@ function App() {
                 const config: Config = await data.json()
                 config.root_dir = _root_dir
                 setCfg(config)
-            } catch (e) {
+            } catch {
                 setCfgError(true)
             }
         }
