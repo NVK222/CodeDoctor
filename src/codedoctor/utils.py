@@ -25,7 +25,21 @@ async def run_tests(test_dir: Path) -> str:
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    out, err = await process.communicate()
+    try:
+        out, err = await asyncio.wait_for(process.communicate(), timeout=15.0)
+    except asyncio.TimeoutError:
+        try:
+            process.kill()
+        except ProcessLookupError:
+            pass
+        out, err = await process.communicate()
+        stdout = out.decode("utf-8", errors="ignore") if out else ""
+        stderr = err.decode("utf-8", errors="ignore") if err else ""
+        return (
+            f"ERROR: Test execution timed out after 15 seconds.\n"
+            f"This usually indicates an infinite loop, deadlock, or unmocked recursive process call in the test code.\n"
+            f"STDOUT:\n{stdout}\nSTDERR:\n{stderr}\nEXIT_CODE:-1"
+        )
     stdout = out.decode("utf-8", errors="ignore") if out else ""
     stderr = err.decode("utf-8", errors="ignore") if err else ""
     output = f"STDOUT:\n{stdout}\nSTDERR:\n:{stderr}\nEXIT_CODE:{process.returncode}"
@@ -53,6 +67,18 @@ def write_to_file(path: str, content: str, cfg: Config) -> None:
     file_path = p if p.is_absolute() else cfg.root_dir / p
     try:
         with open(file_path, "w") as fp:
+            fp.write(content)
+    except FileNotFoundError:
+        raise
+    except Exception:
+        raise
+
+
+def append_to_file(path: str, content: str, cfg: Config) -> None:
+    p = Path(path)
+    file_path = p if p.is_absolute() else cfg.root_dir / p
+    try:
+        with open(file_path, "a") as fp:
             fp.write(content)
     except FileNotFoundError:
         raise

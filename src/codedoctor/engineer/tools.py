@@ -1,7 +1,7 @@
 from langchain.tools import ToolRuntime, tool
 
 from codedoctor.config import Config
-from codedoctor.utils import list_files, read_file, write_to_file
+from codedoctor.utils import append_to_file, list_files, read_file, write_to_file
 
 
 @tool
@@ -91,3 +91,20 @@ def edit_test(
 
     write_to_file(path, new_contents, cfg)
     return f"Successfully updated {path}"
+
+
+@tool
+def add_test(path: str, code: str, runtime: ToolRuntime):
+    """
+    Appends a new test function or block of code to the end of an existing test file.
+    Use this when you want to add new tests without modifying existing ones.
+    Args:
+        path: The name of the test file to append to. Must be one of the paths returned by list_tests().
+        code: The raw Python code block/test to add to the end of file.
+    Returns:
+        A success confirmation string or a detailed error message.
+    """
+    cfg: Config = runtime.state.get("cfg")
+    formatted_code = f"\n\n{code}\n"
+    append_to_file(path, formatted_code, cfg)
+    return f"Successfully appended new test code to end of {path}"
