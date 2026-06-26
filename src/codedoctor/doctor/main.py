@@ -32,11 +32,7 @@ async def run_graph(
         if chunk["type"] == "updates":
             for node_name, state in chunk["data"].items():
                 if node_name == "node_doctor":
-                    m = state.get("messages").content
                     tool_call = state.get("messages").tool_calls
-
-                    if m:
-                        cfg.notify(f"\n{m[0].get('text')}")
 
                     if tool_call:
                         tool = tool_call[0]
@@ -58,17 +54,6 @@ async def run_graph(
                         cfg.notify(f"Error: Tool {m.name} failed with \n{m.content}")
                     else:
                         cfg.notify(f"Tool {m.name} executed successfully.")
-
-                if node_name == "node_test":
-                    m: str = state.get("messages")[0].content
-                    if is_test_successful(m):
-                        cfg.notify("All tests passed successfully")
-                    else:
-                        cfg.notify("Following Tests Failed")
-                        failed = re.findall(r"^FAILED\s+(.+)$", m, re.MULTILINE)
-                        for line in failed:
-                            cfg.notify(line)
-                        cfg.notify("")
 
 
 async def should_run_graph(cfg: Config) -> tuple[bool, str]:
