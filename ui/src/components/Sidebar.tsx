@@ -11,7 +11,9 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ cfg, updateConfig }: SidebarProps) {
-    const [ignoreText, setIgnoreText] = useState<string>(cfg.ignore.join(', '))
+    const [ignoreText, setIgnoreText] = useState<string>(
+        (cfg.ignore || []).join(', ')
+    )
     const [isSaving, setIsSaving] = useState<boolean>(false)
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>(
         'idle'
