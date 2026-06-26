@@ -1,10 +1,14 @@
-interface ErrorProps {
+interface ErrorScreenProps {
     title: string
     description: string
     hint?: string
 }
 
-export default function Error({ title, description, hint }: ErrorProps) {
+export default function ErrorScreen({
+    title,
+    description,
+    hint,
+}: ErrorScreenProps) {
     return (
         <div className="flex flex-col items-center justify-center bg-slate-950 min-h-screen text-slate-300 p-6 font-sans select-none">
             <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl text-center space-y-5">

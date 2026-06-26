@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar'
 import Logs from './components/Logs'
 import Engineer from './components/Engineer'
 import Header from './components/Header'
-import Error from './components/Error'
+import ErrorScreen from './components/ErrorScreen'
 
 function App() {
     const _root_dir = new URLSearchParams(window.location.search).get(
@@ -16,16 +16,7 @@ function App() {
     const [engineerLogs, setEngineerLogs] = useState<LogEntry[]>([])
     const [activePane, setActivePane] = useState<Pane>('doctor')
     const [isOnline, setIsOnline] = useState<boolean>(true)
-
-    if (!_root_dir) {
-        return (
-            <Error
-                title="Root directory Missing"
-                description="CodeDoctor requires a root_dir query parameter to index repository files"
-                hint="uv run gui /path/to/root"
-            />
-        )
-    }
+    const [cfgError, setCfgError] = useState<boolean>(false)
 
     useEffect(() => {
         const checkHealth = async () => {
@@ -44,11 +35,22 @@ function App() {
 
     useEffect(() => {
         const fetchProjectConfig = async () => {
-            const apiURL = `http://localhost:8000/api/context?root_dir=${_root_dir}`
-            const data = await fetch(apiURL)
-            const config: Config = await data.json()
-            config.root_dir = _root_dir
-            setCfg(config)
+            if (!_root_dir) return
+            try {
+                const apiURL = `http://localhost:8000/api/context?root_dir=${_root_dir}`
+                const data = await fetch(apiURL)
+                if (!data.ok) {
+                    const error = await data.json().catch(() => {})
+                    throw new Error(
+                        error.detail || `HTTP Error: ${data.status}`
+                    )
+                }
+                const config: Config = await data.json()
+                config.root_dir = _root_dir
+                setCfg(config)
+            } catch (e) {
+                setCfgError(true)
+            }
         }
 
         if (_root_dir) {
@@ -56,22 +58,38 @@ function App() {
         }
     }, [_root_dir])
 
-    if (!cfg) {
+    if (!_root_dir) {
         return (
-            <div>
-                <p>Error parsing config</p>
-            </div>
+            <ErrorScreen
+                title="Root directory Missing"
+                description="CodeDoctor requires a root_dir query parameter to index repository files"
+                hint="uv run gui /path/to/root"
+            />
         )
     }
 
-    const updateConfig = <K extends keyof Config>(
-        key: K,
-        value: Config[K],
-        config: Config = cfg
-    ) => {
+    if (cfgError) {
+        return (
+            <ErrorScreen
+                title="Missing pyproject.toml"
+                description="pyproject.toml was not found at the specified root_dir"
+                hint="uv run gui . /path/to/root"
+            />
+        )
+    }
+
+    if (!cfg) {
+        return (
+            <div className="flex flex-col items-center justify-center bg-slate-950 min-h-screen font-mono text-sm text-slate-500 space-y-3 select-none">
+                <div className="w-5 h-5 border-2 border-slate-800 border-t-emerald-500 rounded-full animate-spin"></div>
+                <p>Indexing project workspace configuration context...</p>
+            </div>
+        )
+    }
+    const updateConfig = <K extends keyof Config>(key: K, value: Config[K]) => {
         setCfg((prevConfig) => {
             if (!prevConfig) return prevConfig
-            return { ...config, [key]: value }
+            return { ...prevConfig, [key]: value }
         })
     }
 
