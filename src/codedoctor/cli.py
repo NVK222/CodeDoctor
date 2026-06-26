@@ -7,7 +7,7 @@ import webbrowser
 from codedoctor.config import Config
 
 
-def parse_args(is_prompt_optional: str):
+def parse_args(is_prompt_optional: bool):
     parser = argparse.ArgumentParser("CodeDoctor")
 
     parser.add_argument(
@@ -118,7 +118,7 @@ def prepare_exclude_dot_from_toml(toml_data: dict[str, bool]) -> bool | None:
     return exclude_dot
 
 
-def initialize_config(is_prompt_optional: str = True) -> tuple[Config, str]:
+def initialize_config(is_prompt_optional: bool = True) -> tuple[Config, str]:
     args = parse_args(is_prompt_optional)
 
     path_to_toml = Path(args.root_dir) / "pyproject.toml"
