@@ -1,7 +1,6 @@
 from pathlib import Path
 import tomlkit
 from fastapi import APIRouter, HTTPException
-from tomlkit import toml_document
 
 from codedoctor.api.schemas import LoadContextSchema, SaveConfigRequest
 from codedoctor.cli import (
@@ -18,6 +17,8 @@ context_router = APIRouter()
 @context_router.get("/api/context")
 def get_context(root_dir: str) -> LoadContextSchema:
     path_to_toml = Path(root_dir) / "pyproject.toml"
+    if not path_to_toml.exists():
+        raise HTTPException(404, f"pyproject.toml does not exist at {path_to_toml}")
     toml_data = get_toml_data(path_to_toml)
     ignore_set = prepare_ignore_set_from_toml(toml_data)
     exclude_dot = prepare_exclude_dot_from_toml(toml_data)
