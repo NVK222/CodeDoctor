@@ -14,7 +14,7 @@ def main():
     cfg, user_prompt = initialize_config()
     cfg.subscribe(print_to_terminal)
 
-    should_continue, pre_test_result = should_run_graph(cfg)
+    should_continue, pre_test_result = run(should_run_graph(cfg))
     if not should_continue:
         sys.exit(0)
 
